@@ -59,3 +59,7 @@ function outro ({state, spp}) {  let actions = []
 }
 
 ```
+
+And this is what the above sounds like:
+
+[![Watch the video](https://raw.githubusercontent.com/ryanramage/thrum/master/preview.png)](https://youtu.be/6WRXGUzItO0)
