@@ -1,0 +1,33 @@
+{
+  "name": "thrum",
+  "version": "1.0.0",
+  "description": "livecoding music sequencer using functional reducers ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanramage/thrum.git"
+  },
+  "keywords": [
+    "livecoding",
+    "reducer",
+    "state",
+    "predictable",
+    "functional",
+    "hot"
+  ],
+  "author": "Ryan Ramage",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryanramage/thrum/issues"
+  },
+  "homepage": "https://github.com/ryanramage/thrum#readme",
+  "dependencies": {
+    "jzz": "^1.0.2",
+    "lodash.clone": "^4.5.0",
+    "rc": "^1.2.8",
+    "tonal": "^2.2.2"
+  }
+}
