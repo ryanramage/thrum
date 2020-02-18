@@ -75,24 +75,22 @@ Thrum is setup for livecoding in any editor you choose. When you save in your ed
 
 Install thrum as a global. Nodemon is recommended for livereload coding.
 
-```
-npm i -g thrum nodemon
+    npm i -g thrum nodemon
+
 
 2. create your file for music
 ------------------------------
 
-```
-touch music.js
-```
+    touch music.js
 
 3. start the thrum-livecoding process on the command line
 ---------------------------------------------------------
 
 Pass in the midi bus that will have the main midi clock your daw is sending out on
 
-```
-thrum-livecoding 'IAC Driver IAC Bus 2'
-```
+
+    thrum-livecoding 'IAC Driver IAC Bus 2'
+
 
 4. create your music. set livecoding to true
 ----------------------------------------------
@@ -121,8 +119,6 @@ function tick (input) {
 
 in another command line run
 
-```
-nodemon music.js
-```
+    nodemon music.js
 
 Now each save will hot reload your music
