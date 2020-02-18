@@ -1,8 +1,11 @@
 {
   "name": "thrum",
   "version": "1.0.0",
-  "description": "livecoding music sequencer using functional reducers ",
+  "description": "livecoding music sequencer using functional reducers",
   "main": "index.js",
+  "bin": {
+    "thrum-livecoding": "./livecoding"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
