@@ -89,7 +89,7 @@ Install thrum as a global. Nodemon is recommended for livereload coding.
 Pass in the midi bus that will have the main midi clock your daw is sending out on
 
 
-    thrum-livecoding 'IAC Driver IAC Bus 2'
+    thrum 'IAC Driver IAC Bus 2'
 
 
 4. create your music. set livecoding to true

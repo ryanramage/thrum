@@ -4,10 +4,10 @@
   "description": "livecoding music sequencer using functional reducers",
   "main": "index.js",
   "bin": {
-    "thrum-livecoding": "./livecoding.js"
+    "thrum": "./livecoding.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tap test/*.js"
   },
   "repository": {
     "type": "git",
@@ -32,5 +32,9 @@
     "lodash.clone": "^4.5.0",
     "rc": "^1.2.8",
     "tonal": "^2.2.2"
+  },
+  "devDependencies": {
+    "tap": "^14.10.6",
+    "tape": "^4.13.0"
   }
 }

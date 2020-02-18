@@ -5,9 +5,17 @@ const config = require('rc')('clock', {
   port: 555
 })
 
+let selectedInput = config._[0]
+if (!selectedInput) {
+  let inputs = JZZ().info().inputs
+  if (inputs || inputs.length) selectedInput = inputs[0].name
+}
+
 JZZ().or('Cannot start MIDI engine!')
-const input = JZZ().openMidiIn(config._[0])
-const output = JZZ().openMidiOut(config._[0])
+const input = JZZ().openMidiIn(selectedInput)
+const output = JZZ().openMidiOut(selectedInput)
+
+console.log('connected to midi clock on', selectedInput)
 
 let spp = 0
 let broadcasting = false
@@ -18,9 +26,7 @@ input.connect(msg => {
     case 0xF2:
       let songPosition = (msg[2] << 7) + msg[1] // data2 is msb, data1 is lsb
       if (broadcasting) broadcasting = false
-      else {
-        spp = (songPosition * 6)
-      }
+      else spp = (songPosition * 6)
       break
     case 0xF8:
       spp++
