@@ -4,7 +4,12 @@ const lengths = require('./lib/lengths')
 exports.operators = require('./lib/operators')
 exports.setup = (options) => rc('forca', options)
 
-exports.connect = (config, initialState, dispatchers, onClockFunction) => {
+exports.connect = (config, dispatchers, initialState, onClockFunction) => {
+  if (!onClockFunction && typeof initialState === 'function') {
+    onClockFunction = initialState
+    initialState = {}
+  }
+
   let lastState = initialState
   let onClock = (spp, outputs) => {
     let {actions, state} = onClockFunction({state: lastState, spp})

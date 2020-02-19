@@ -6,7 +6,22 @@ Thrum is an experiment in making a livecoding music sequencer using functional r
 Tools like redux and flux have made a big impact with frontend developers, and as such I am attempting to take
 that hammer and nail some midi control with thrum.
 
-Here is currently how a song structure looks like with thrum.
+Here are some examples of song structures using thrum.
+
+Small example
+```
+const { connect, toMidi, onBeat } = require('thrum')
+connect({livecoding: true}, {toMidi}, tick)
+
+function tick (input) {
+  let actions = []
+  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'D4'}])
+  return {state, actions}
+}
+
+```
+
+Large example
 
 ```
 const { setup, connect, bars, toMidi, onBeat } = require('thrum')
