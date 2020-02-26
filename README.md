@@ -26,8 +26,8 @@ Large example
 ```
 const { setup, connect, bars, toMidi, onBeat } = require('thrum')
 const config = setup({
-  input: { 1: 'IAC Driver IAC Bus 2' },
-  output: { 1: 'IAC Driver Bus 1' }
+  inputs: { 1: 'IAC Driver IAC Bus 2' },
+  outputs: { 1: 'IAC Driver Bus 1' }
 })
 const initialState = {}
 const dispatchers = { toMidi }
@@ -114,8 +114,8 @@ Pass in the midi bus that will have the main midi clock your daw is sending out 
 const { setup, connect, bars, toMidi, onBeat } = require('thrum')
 const config = setup({
   livecoding: true, // IMPORTANT - this tells thrum you are livecoding.
-  input: { 1: 'IAC Driver IAC Bus 2' },
-  output: { 1: 'IAC Driver Bus 1' }
+  inputs: { 1: 'IAC Driver IAC Bus 2' },
+  outputs: { 1: 'IAC Driver Bus 1' }
 })
 const initialState = {}
 const dispatchers = { toMidi }

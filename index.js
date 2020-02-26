@@ -2,7 +2,11 @@ const rc = require('rc')
 exports.midi = require('./lib/midi')
 const lengths = require('./lib/lengths')
 exports.operators = require('./lib/operators')
-exports.setup = (options) => rc('forca', options)
+exports.setup = (options) => rc('thrum', options)
+
+exports.go = (tick) => {
+  exports.connect(exports.setup(), {toMidi: exports.toMidi}, tick)
+}
 
 exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   if (!onClockFunction && typeof initialState === 'function') {
@@ -12,9 +16,9 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
 
   let lastState = initialState
   let onClock = (spp, outputs) => {
-    let {actions, state} = onClockFunction({state: lastState, spp})
-    exports.dispatch(dispatchers, actions, state, {midi: outputs})
-    lastState = state // we should clone this
+    let results = onClockFunction({state: lastState, spp})
+    if (results && results.actions) exports.dispatch(dispatchers, results.actions, results.state, {midi: outputs})
+    if (results && results.state) lastState = results.state // we should clone this
   }
 
   let onMidi = (msg, outputs) => {
