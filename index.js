@@ -86,7 +86,6 @@ exports.toMidi = (spp, msg, state, context) => {
   let length = msg.length || lengths['8n']
   if (typeof length === 'string') length = lengths[length]
   if (length < 1) length = 1
-
   port.noteOn(channel, msg.note, velocity)
   let offSpp = spp + length
   return {spp: offSpp, name: 'midiOff', msg}
