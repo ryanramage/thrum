@@ -14,8 +14,8 @@ watch()
 function watch () {
   let selectedInput = config._[0]
   if (!selectedInput) {
-    console.log('please provide a file to watch')
-    process.exit(1)
+    console.log('No watch files provided.')
+    return
   }
   nodemon({ script: selectedInput })
   nodemon.on('start', function () {
