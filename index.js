@@ -23,15 +23,10 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
     // clear any future actions
     futureActions = exports.dispatchMemoActions(spp, futureActions, {midi: outputs})
 
-    let actions = List([])
-    let results = onClockFunction({state: lastState, spp}, actions)
-
-    if (List.isList(results)) {
-      futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, results, {}, {midi: outputs}))
-    } else if (results && results.actions) {
-      futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, results.actions, results.state, {midi: outputs}))
-    }
-    if (results && results.state) lastState = results.state // we should clone this
+    List([]).withMutations(userActions => {
+      onClockFunction({state: lastState, spp}, userActions)
+        futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, userActions, {}, {midi: outputs}))
+    })
   }
 
   let onMidi = (msg, outputs) => {
