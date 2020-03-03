@@ -8,13 +8,15 @@ const config = require('rc')('thrum', {
   inputs: {}
 })
 
-let selectedInput = config._[0] || Object.values(config.inputs)[0]
-
-// check if its a file and run the nodemon
-if (selectedInput && fs.existsSync(selectedInput)) watch()
-else midi()
+midi()
+watch()
 
 function watch () {
+  let selectedInput = config._[0]
+  if (!selectedInput) {
+    console.log('please provide a file to watch')
+    process.exit(1)
+  }
   nodemon({ script: selectedInput })
   nodemon.on('start', function () {
     console.log('App has started');
@@ -27,6 +29,7 @@ function watch () {
 }
 
 function midi () {
+  let selectedInput = Object.values(config.inputs)[0]
   if (!selectedInput) {
     let inputs = JZZ().info().inputs
     if (inputs || inputs.length) selectedInput = inputs[0].name
