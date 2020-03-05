@@ -10,14 +10,15 @@ Here are some examples of song structures using thrum.
 
 Small example
 ```
-const { connect, toMidi, onBeat } = require('thrum')
-connect({livecoding: true}, {toMidi}, tick)
+const { tick, clip } = require('thrum')
 
-function tick (input) {
-  let actions = []
-  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'D4'}])
-  return {state, actions}
-}
+tick([
+  clip('xxxx', ['C5'], {channel: 0}),
+  clip('x-x-', ['C5'], {channel: 5}),
+  clip('[xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][xx][x[xxxx]]', ['C5'], {channel: 4, velocity: 10}),
+  clip('[x-x]x[xx]xx-[xx]-[xxx]-[xx]-x-[xx][xxxx][x-x]-[xx]-x-[xxxx][xxxx]', ['C3', 'C2', 'C3', 'C2', 'E2', 'G2', 'C3'], {channel: 7})
+])
+
 
 ```
 
@@ -88,52 +89,62 @@ Thrum is setup for livecoding in any editor you choose. When you save in your ed
 1. Install dependencies
 ------------------------
 
-Install thrum as a global. Nodemon is recommended for livereload coding.
+Install thrum as a global.
 
-    npm i -g thrum nodemon
+    npm i -g thrum
 
-
-2. create your file for music
+2. Create a project directory
 ------------------------------
 
-    touch music.js
+```
+mkdir test-thrum
+cd test-thrum
+touch .thrumrc
+touch music.js
+```
 
-3. start the thrum-livecoding process on the command line
----------------------------------------------------------
+3. Edit your .thrumrc file
+--------------------------
 
-Pass in the midi bus that will have the main midi clock your daw is sending out on
-
-
-    thrum 'IAC Driver IAC Bus 2'
-
-
-4. create your music. set livecoding to true
-----------------------------------------------
+This is the configuration for your project. Its mostly to map midi config. Mine looks like this:
 
 ```
-const { setup, connect, bars, toMidi, onBeat } = require('thrum')
-const config = setup({
-  livecoding: true, // IMPORTANT - this tells thrum you are livecoding.
-  inputs: { 1: 'IAC Driver IAC Bus 2' },
-  outputs: { 1: 'IAC Driver Bus 1' }
-})
-const initialState = {}
-const dispatchers = { toMidi }
-connect(config, initialState, dispatchers, tick)
-
-function tick (input) {
-  let actions = []
-  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'C4', channel: 0}])
-  if (onBeat(spp, '4n')) actions.push(['toMidi', {note: 'E5', channel: 1}])
-  return {state, actions}
+{
+  "livecoding": true,
+  "inputs": {
+    "1": "IAC Driver IAC Bus 2"
+  },
+  "outputs": {
+    "1": "IAC Driver Bus 1"
+  }
 }
 ```
 
-5. turn on nodemon.
---------------------------------------------------------------------------
+The input number one should be where your midi clock comes in. on ios you probably want "IAC Driver Bus 1" but I have 2 busses for other reasons.
 
-in another command line run
+The output is to connect to any midi devices. I just write to the main osx bus.
 
-    nodemon music.js
+
+
+4. edit your music.js file
+------------------------------
+
+This file is where you generate sequence midi code. The smallest one looks like:
+
+```
+const { tick, clip } = require('thrum')
+tick([])
+```
+
+
+5. start the thrum process on the command line
+---------------------------------------------------------
+
+    thrum music.js
 
 Now each save will hot reload your music
+
+6. fire up your daw and start/loop the midi clock
+-------------------------------------------------
+
+Thrum listens on the midi input defined in step 3 for midi clock events. Something has to generate those. Your DAW or master device will do the trick. In your daw, you will have to create instruments on tracks that will listen for midi events on each channel you want. This will play the midi notes that thrum generates.
