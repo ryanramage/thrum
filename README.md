@@ -6,6 +6,7 @@ Thrum is an experiment in making a livecoding music sequencer using functional r
 Tools like redux and flux have made a big impact with frontend developers, and as such I am attempting to take
 that hammer and nail some midi control with thrum.
 
+
 Here are some examples of song structures using thrum.
 
 Small example
@@ -79,6 +80,9 @@ function outro ({state, spp}) {  let actions = []
 And this is what the above sounds like:
 
 [![Watch the video](https://raw.githubusercontent.com/ryanramage/thrum/master/preview.png)](https://youtu.be/6WRXGUzItO0)
+
+
+For my current set of live examples, see https://github.com/ryanramage/thrum-examples
 
 
 livecoding
