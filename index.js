@@ -4,9 +4,16 @@ exports.midi = require('./lib/midi')
 const lengths = require('./lib/lengths')
 exports.ops = require('./lib/operators')
 exports.patterns = require('./lib/patterns')
+exports.clip = exports.patterns.clip
+
 exports.setup = (options) => rc('thrum', options)
 
 exports.tick = (tick) => {
+  if (Array.isArray(tick)) {
+    const items = tick
+    tick = function (input, actions) { items.forEach(item => item(input, actions)) }
+  }
+
   exports.connect(exports.setup(), {toMidi: exports.toMidi}, tick)
 }
 
@@ -32,7 +39,22 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   let onMidi = (msg, outputs) => {
     // console.log('midi received', msg) // do another reducer
   }
-  exports.midi(config, onClock, onMidi)
+
+  let onStop = (midi) => {
+    // clear all notes
+    futureActions.forEach(fa => {
+      let msg = fa.msg
+      if (!msg) return
+      let output = msg.output || Object.keys(midi)[0]
+      let channel = msg.channel || 0
+      let port = midi[output]
+      if (!port) return
+      port.allNotesOff(channel)
+      port.allSoundOff(channel)
+    })
+  }
+
+  exports.midi(config, onClock, onMidi, onStop)
 }
 
 exports.bars = ({state, spp}, baseTimeSignature, structureArray) => {
@@ -57,8 +79,15 @@ exports.dispatch = (dispatchers, spp, actions, state, context) => {
   return List([]).withMutations(futureActions => {
     if (!actions) actions = []
     actions.forEach(a => {
-      let to = a[0]
-      let msg = a[1]
+      let to = null
+      let msg = null
+      if (Array.isArray(a)) {
+        to = a[0]
+        msg = a[1]
+      } else {
+        to = 'toMidi'
+        msg = a
+      }
       if (!to) return
       let fn = dispatchers[to]
       if (!fn) return
