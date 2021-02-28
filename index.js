@@ -6,6 +6,11 @@ exports.ops = require('./lib/operators')
 exports.patterns = require('./lib/patterns')
 exports.clip = exports.patterns.clip
 
+process.once('SIGUSR2', function () {
+  console.log('SHUT IT DOWN')
+  process.kill(process.pid, 'SIGUSR2');
+});
+
 exports.setup = (options) => rc('thrum', options)
 
 exports.tick = (tick) => {
@@ -27,10 +32,10 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   let futureActions = List([])
 
   let onClock = (spp, outputs) => {
-    // clear any future actions
+    // clear any future actions. eg: scheduled midi off notes
     futureActions = exports.dispatchMemoActions(spp, futureActions, {midi: outputs})
 
-    List([]).withMutations(userActions => {
+    List([]).withMutations(userActions => { // userActions is an immutable list that will accumulate actions
       onClockFunction({state: lastState, spp}, userActions)
         futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, userActions, {}, {midi: outputs}))
     })
@@ -110,9 +115,9 @@ exports.toMidi = (spp, msg, state, context) => {
   let length = msg.length || lengths['8n']
   if (typeof length === 'string') length = lengths[length]
   if (length < 1) length = 1
-  port.noteOn(channel, msg.note, velocity)
+  port.noteOn(channel, msg.note, velocity) // request an acutal midi note
   let offSpp = spp + length
-  return {spp: offSpp, name: 'midiOff', msg}
+  return {spp: offSpp, name: 'midiOff', msg} // schedule a midi off note
 }
 
 exports.midiOff = (spp, msg, context) => {
