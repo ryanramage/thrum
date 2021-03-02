@@ -37,7 +37,7 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
 
     List([]).withMutations(userActions => { // userActions is an immutable list that will accumulate actions
       onClockFunction({state: lastState, spp}, userActions)
-        futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, userActions, {}, {midi: outputs}))
+      futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, userActions, {}, {midi: outputs}))
     })
   }
 
@@ -62,7 +62,7 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   exports.midi(config, onClock, onMidi, onStop)
 }
 
-exports.bars = ({state, spp}, baseTimeSignature, structureArray) => {
+exports.bars = ({state, spp}, actions, baseTimeSignature, structureArray) => {
   let nextSPP = 0
   let [beatsPerBar, noteLength] = baseTimeSignature
   let byStartSPP = structureArray.map(part => {
@@ -74,7 +74,14 @@ exports.bars = ({state, spp}, baseTimeSignature, structureArray) => {
 
   for (var i = 0; i < byStartSPP.length; i++) {
     let [thisBarStartSPP, barFunc] = byStartSPP[i]
-    if (spp <= thisBarStartSPP) return barFunc({state, spp})
+    if (spp <= thisBarStartSPP) {
+      let tick = barFunc({state, spp}, actions)
+      if (Array.isArray(tick)) {
+        const items = tick
+        tick = function (input, actions) { items.forEach(item => item(input, actions)) }
+      }
+      return tick
+    }
   }
   return {state, actions: []} // no bars. just default
 }
