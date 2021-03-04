@@ -28,12 +28,13 @@
   },
   "homepage": "https://github.com/ryanramage/thrum#readme",
   "dependencies": {
+    "@tonaljs/tonal": "^4.6.0",
     "immutable": "^4.0.0-rc.12",
     "jzz": "^1.0.2",
     "lodash.clone": "^4.5.0",
     "nodemon": "^2.0.2",
-    "rc": "^1.2.8",
-    "tonal": "^2.2.2"
+    "ramda": "^0.27.1",
+    "rc": "^1.2.8"
   },
   "devDependencies": {
     "tap": "^14.10.6",
