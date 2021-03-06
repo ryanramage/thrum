@@ -7,16 +7,14 @@ const bars = require('../r/bars')
 const pattern = require('../r/pattern')
 const play = require('../r/play')
 const transpose = require('../r/transpose')
+const SongState = require('../r/songState')
 
 test('tick with bars', t => {
-  let spp = 24
-  let actions = []
-  let state = {spp, actions}
+  let state = SongState.set({spp: 0, userState: {}, actions: []})
 
   let cscale5 = Tonal.Scale.get("C major").notes.map(i => `${i}5`)
   let quarterNotePattern = pattern('xxxx')
   let quarterNoteCscale = quarterNotePattern(play(cscale5))
-
   let upScale = transpose('5P', quarterNoteCscale)
 
 // probably use evolve underneath?
@@ -30,24 +28,9 @@ test('tick with bars', t => {
     , [2, 2, quarterNoteCscale]
     , [3, 8, upScale]
   //  , [3, 8, modulatedQuarterNoteCscale]
-
   ]))(state)
 
-  console.log(output)
-  t.ok(output)
+  t.equals(output.spp, 0)
+  console.log(state)
   t.end()
 })
-
-// test('tick with array', t => {
-//   let spp = 0
-//   let state = {}
-//   let actions = []
-//   let input = {spp,state,actions}
-//
-//   let output = tick([
-//
-//   ])(input)
-//   console.log(output)
-//   t.ok(output)
-//   t.end()
-// })

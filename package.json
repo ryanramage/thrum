@@ -30,6 +30,7 @@
   "dependencies": {
     "@tonaljs/tonal": "^4.6.0",
     "immutable": "^4.0.0-rc.12",
+    "immutable-enumerables": "^1.0.0",
     "jzz": "^1.0.2",
     "lodash.clone": "^4.5.0",
     "nodemon": "^2.0.2",

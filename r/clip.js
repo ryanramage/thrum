@@ -19,7 +19,6 @@ function ops_clip (compiled, {spp}) {
   let internalSpp = spp % compiled.totalLength
   let startTime = 0
   let count = 0
-  console.log(compiled)
   let actions = []
   compiled.clipNotes.forEach((item, i) => {
     let clipIndex = count
