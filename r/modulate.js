@@ -4,7 +4,7 @@ const Tonal = require('@tonaljs/tonal')
 
 module.exports = R.curryN(5, modulate)
 
-function modulate(frequency, actionFilter, transformations, emitter, state) {
+function modulate(subdivision, actionsFilter, transformations, emitter, state) {
   emitter(state)
   // transpose all the notes
   state.actions = state.actions.map(a => {

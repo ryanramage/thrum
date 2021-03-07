@@ -1,10 +1,14 @@
 const rc = require('rc')
 const { List } = require('immutable')
+const SongState = require('./r/SongState')
+const tick = require('./r/tick')
+
 exports.midi = require('./lib/midi')
-const lengths = require('./lib/lengths')
-exports.ops = require('./lib/operators')
-exports.patterns = require('./lib/patterns')
-exports.clip = exports.patterns.clip
+exports.Tonal = require('@tonaljs/tonal')
+exports.pattern = require('./r/pattern')
+exports.play = require('./r/play')
+exports.transpose = require('./r/transpose')
+exports.bars = require('./r/bars')
 
 process.once('SIGUSR2', function () {
   console.log('SHUT IT DOWN')
@@ -13,19 +17,14 @@ process.once('SIGUSR2', function () {
 
 exports.setup = (options) => rc('thrum', options)
 
-exports.tick = (tick) => {
-  if (Array.isArray(tick)) {
-    const items = tick
-    tick = function (input, actions) { items.forEach(item => item(input, actions)) }
-  }
-
-  exports.connect(exports.setup(), {toMidi: exports.toMidi}, tick)
+exports.tick = (tickExpression) => {
+  exports.connect(exports.setup(), {toMidi: exports.toMidi}, tickExpression)
 }
 
-exports.connect = (config, dispatchers, initialState, onClockFunction) => {
-  if (!onClockFunction && typeof initialState === 'function') {
-    onClockFunction = initialState
-    initialState = {}
+exports.connect = (config, dispatchers, initialState, tickExpression) => {
+  if (!tickExpression && typeof initialState === 'function') {
+    tickExpression = initialState
+    initialState = SongState.set({spp: 0, userState: {}, actions: []})
   }
 
   let lastState = initialState
@@ -34,11 +33,8 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   let onClock = (spp, outputs) => {
     // clear any future actions. eg: scheduled midi off notes
     futureActions = exports.dispatchMemoActions(spp, futureActions, {midi: outputs})
-
-    List([]).withMutations(userActions => { // userActions is an immutable list that will accumulate actions
-      onClockFunction({state: lastState, spp}, userActions)
-      futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, userActions, {}, {midi: outputs}))
-    })
+    lastState = tickExpression(SongState.set({...lastState, spp, actions: []}))
+    futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, lastState.actions, {midi: outputs}))
   }
 
   let onMidi = (msg, outputs) => {
@@ -62,32 +58,8 @@ exports.connect = (config, dispatchers, initialState, onClockFunction) => {
   exports.midi(config, onClock, onMidi, onStop)
 }
 
-exports.bars = ({state, spp}, actions, baseTimeSignature, structureArray) => {
-  let nextSPP = 0
-  let [beatsPerBar, noteLength] = baseTimeSignature
-  let byStartSPP = structureArray.map(part => {
-    let [barCount, barFunc] = part
-    nextSPP = nextSPP + (barCount * (beatsPerBar * lengths[noteLength]))
-    let thisBarStartSPP = nextSPP - 1
-    return [thisBarStartSPP, barFunc]
-  })
-
-  for (var i = 0; i < byStartSPP.length; i++) {
-    let [thisBarStartSPP, barFunc] = byStartSPP[i]
-    if (spp <= thisBarStartSPP) {
-      let tick = barFunc({state, spp}, actions)
-      if (Array.isArray(tick)) {
-        const items = tick
-        tick = function (input, actions) { items.forEach(item => item(input, actions)) }
-      }
-      return tick
-    }
-  }
-  return {state, actions: []} // no bars. just default
-}
-
 // returns a list of memo (future actions)
-exports.dispatch = (dispatchers, spp, actions, state, context) => {
+exports.dispatch = (dispatchers, spp, actions, context) => {
   return List([]).withMutations(futureActions => {
     if (!actions) actions = []
     actions.forEach(a => {
@@ -103,7 +75,7 @@ exports.dispatch = (dispatchers, spp, actions, state, context) => {
       if (!to) return
       let fn = dispatchers[to]
       if (!fn) return
-      let fa = fn.call(null, spp, msg, state, context)
+      let fa = fn.call(null, spp, msg, context)
       if (fa) futureActions.concat(fa)
       return true
     })
@@ -111,7 +83,7 @@ exports.dispatch = (dispatchers, spp, actions, state, context) => {
   })
 }
 
-exports.toMidi = (spp, msg, state, context) => {
+exports.toMidi = (spp, msg, context) => {
   let midi = context.midi
   let output = msg.output || Object.keys(midi)[0]
   let channel = msg.channel || 0
@@ -138,10 +110,6 @@ exports.midiOff = (spp, msg, context) => {
   port.noteOff(channel, msg.note)
 }
 
-exports.onBeat = (spp, name) => {
-  let base = lengths[name]
-  return (spp % base === 0)
-}
 
 exports.dispatchMemoActions = (spp, futureActions, context) => {
   return futureActions.filter(action => {
