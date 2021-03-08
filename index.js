@@ -7,6 +7,7 @@ exports.midi = require('./lib/midi')
 exports.Tonal = require('@tonaljs/tonal')
 exports.pattern = require('./r/pattern')
 exports.play = require('./r/play')
+exports.strumChord = require('./r/strumChord')
 exports.transpose = require('./r/transpose')
 exports.bars = require('./r/bars')
 
@@ -31,9 +32,10 @@ exports.connect = (config, dispatchers, initialState, tickExpression) => {
   let futureActions = List([])
 
   let onClock = (spp, outputs) => {
+    let thisState = SongState.set({...lastState, spp, actions: []})
     // clear any future actions. eg: scheduled midi off notes
-    futureActions = exports.dispatchMemoActions(spp, futureActions, {midi: outputs})
-    lastState = tickExpression(SongState.set({...lastState, spp, actions: []}))
+    futureActions = exports.dispatchMemoActions(spp, futureActions, thisState, {midi: outputs})
+    lastState = tickExpression(thisState)
     futureActions = futureActions.concat(exports.dispatch(dispatchers, spp, lastState.actions, {midi: outputs}))
   }
 
@@ -68,6 +70,10 @@ exports.dispatch = (dispatchers, spp, actions, context) => {
       if (Array.isArray(a)) {
         to = a[0]
         msg = a[1]
+      } else if (a.futureSpp) {
+        let futureSpp = a.futureSpp
+        delete a.futureSpp
+        futureActions.concat({ spp: futureSpp, name: 'midiOn', msg: a })
       } else {
         to = 'toMidi'
         msg = a
@@ -111,10 +117,13 @@ exports.midiOff = (spp, msg, context) => {
 }
 
 
-exports.dispatchMemoActions = (spp, futureActions, context) => {
+exports.dispatchMemoActions = (spp, futureActions, state, context) => {
   return futureActions.filter(action => {
     if (action.spp !== spp) return true
     if (action.name === 'midiOff') exports.midiOff(spp, action.msg, context)
+    if (action.name === 'midiOn') {
+      state.actions.push(action.msg)
+    }
     return false // so filter works
   })
 }
