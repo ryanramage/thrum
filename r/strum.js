@@ -3,8 +3,8 @@ const lengths = require('../lib/lengths')
 
 module.exports = R.curryN(4, play)
 
-function play(chordNotes, options, count, _length, state) {
-  let spread = 5
+function play(options, chordNotes, count, _length, state) {
+  let spread = 3
   if (typeof options.spread === 'number') spread = options.spread
   let length = options.length || _length
   chordNotes.forEach((n, _i) => {
