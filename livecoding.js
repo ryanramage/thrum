@@ -1,15 +1,24 @@
 #!/usr/bin/env node
 const JZZ = require('jzz')
+const path = require('path')
 const fs = require('fs')
 const http = require('http')
 const nodemon = require('nodemon');
 const config = require('rc')('thrum', {
-  port: 555,
+  port: 5551,
   inputs: {}
 })
 
+function usage() {
+  console.log('Usage: thrum file.js')
+  console.log('Available midi ports:')
+  console.log(JZZ().info().inputs.map(i => i.name))
+}
+if (!config._[0]) return usage()
+
 midi()
 watch()
+
 
 function watch () {
   let selectedInput = config._[0]
@@ -17,7 +26,17 @@ function watch () {
     console.log('No watch files provided.')
     return
   }
-  nodemon({ script: selectedInput })
+
+  // users can just npm i thrum -g,
+  // to save the user a npm i (in the thrum dir)
+  // we add the __filename to the node_path env variable
+  let node_path = path.resolve(__filename, '../..')
+  nodemon({
+    script: selectedInput,
+    env: {
+      'NODE_PATH': node_path
+    }
+  })
   nodemon.on('start', function () {
     console.log('App has started');
   }).on('quit', function () {
