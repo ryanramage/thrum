@@ -1,6 +1,6 @@
 {
   "name": "thrum",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "livecoding music sequencer using functional reducers",
   "main": "index.js",
   "bin": {

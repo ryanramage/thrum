@@ -48,7 +48,8 @@ function watch () {
 }
 
 function midi () {
-  let selectedInput = Object.values(config.inputs)[0]
+  let selectedInput = config.in
+  if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
   if (!selectedInput) {
     let inputs = JZZ().info().inputs
     if (inputs || inputs.length) selectedInput = inputs[0].name
