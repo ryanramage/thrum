@@ -90,6 +90,7 @@ function midi () {
   })
 
   const server = http.createServer((req, resp) => {
+    console.log('got a request', spp)
     let songPosition = Math.floor(spp / 6)
     broadcasting = true
     output.send(JZZ.MIDI.songPosition(songPosition))
