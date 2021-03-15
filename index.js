@@ -9,6 +9,7 @@ exports.play = require('./r/play')
 exports.strum = require('./r/strum')({}) // a strum, use defaults
 exports.strumO = require('./r/strum')
 exports.transpose = require('./r/transpose')
+exports.subdivision = require('./r/subdivision')
 exports.Tonal = require('@tonaljs/tonal')
 
 // exporting more the manual setup
