@@ -1,5 +1,4 @@
 const rc = require('rc')
-const tick = require('./r/tick')
 const toMidi = require('./lib/toMidi')
 
 // the most used helpers
@@ -11,6 +10,7 @@ exports.strumO = require('./r/strum')
 exports.transpose = require('./r/transpose')
 exports.subdivision = require('./r/subdivision')
 exports.Tonal = require('@tonaljs/tonal')
+exports.mod = require('./r/mod')
 
 // exporting more the manual setup
 exports.setup = (options) => rc('thrum', options)

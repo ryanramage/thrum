@@ -4,7 +4,6 @@ const lengths = require('../lib/lengths')
 module.exports = R.curryN(4, play)
 
 function play(options, notes, count, length, state) {
-
   // not sure how to model this properly, so for now
   if (!state) {
     // we got empty options, shuffle
