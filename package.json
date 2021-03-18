@@ -34,6 +34,7 @@
     "jzz": "^1.0.2",
     "lodash.clone": "^4.5.0",
     "nodemon": "^2.0.7",
+    "periodic-function": "^1.1.4",
     "ramda": "^0.27.1",
     "rc": "^1.2.8"
   },

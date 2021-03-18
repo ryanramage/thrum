@@ -21,7 +21,6 @@ function play(options, notes, count, length, state) {
 
   if (options.velocity) _msg.velocity = options.velocity
 
-  console.log(_msg)
 
   state.actions.push(_msg)
   return state
