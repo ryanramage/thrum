@@ -16,8 +16,7 @@ const bars = (baseTimeSignature, structureArray, state) => {
   for (var i = 0; i < byStartSPP.length; i++) {
     let [thisBarStartSPP, thisBarEndSpp, barFunc] = byStartSPP[i]
     if (thisBarStartSPP <= state.spp && state.spp <= thisBarEndSpp) {
-      // mutable state is bad. // should merge all state from all branches that fire, prob reduce
-      barFunc(state)
+      expression(barFunc, state)
     }
   }
   return state
