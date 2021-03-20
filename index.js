@@ -2,26 +2,46 @@ const rc = require('rc')
 const toMidi = require('./lib/toMidi')
 const toCC = require('./lib/toCC')
 
-// the most used helpers
-exports.bars = require('./r/bars')
-exports.pattern = require('./r/pattern')
-exports.play = require('./r/play')
-exports.strum = require('./r/strum')
-exports.transpose = require('./r/transpose')
-exports.subdivision = require('./r/subdivision')
-exports.length = require('./r/length')
-exports.Tonal = require('@tonaljs/tonal')
-exports.repeat = require('./r/repeat')
-exports.frequency = require('./r/frequency')
-exports.ramp = require('./r/ramp')
-exports.lfo = require('./r/lfo')
-exports.cc = require('./r/cc')
+
+const thrum = {}
+
+// meter functions
+thrum.bars = require('./r/bars')
+thrum.length = require('./r/length')
+thrum.repeat = require('./r/repeat')
+thrum.lfo = require('./r/lfo')
+thrum.subdivision = require('./r/subdivision')
+thrum.ramp = require('./r/ramp')
+
+// non-meter
+thrum.pattern = require('./r/pattern')
+thrum.play = require('./r/play')
+thrum.strum = require('./r/strum')
+thrum.transpose = require('./r/transpose')
+thrum.Tonal = require('@tonaljs/tonal')
+thrum.frequency = require('./r/frequency')
+thrum.cc = require('./r/cc')
+thrum.chord = require('./lib/chord')
 
 // exporting more the manual setup
-exports.setup = (options) => rc('thrum', options)
-exports.connect = require('./lib/connect')
+thrum.setup = (options) => rc('thrum', options)
+thrum.connect = require('./lib/connect')
 
 // the main entry into thrum for most people
-exports.tick = (tickExpression) => {
-  exports.connect(exports.setup(), {toMidi, toCC}, tickExpression)
+thrum.tick = (tickExpression) => {
+  thrum.connect(thrum.setup(), {toMidi, toCC}, tickExpression)
 }
+
+thrum.meter = (meter) => {
+  // bind the meter functions
+  const boundThrum = thrum
+  boundThrum.bars = thrum.bars(meter)
+  boundThrum.length = thrum.length(meter)
+  boundThrum.repeat = thrum.repeat(meter)
+  boundThrum.lfo = thrum.lfo(meter)
+  boundThrum.subdivision = thrum.subdivision(meter)
+  boundThrum.ramp = thrum.ramp(meter)
+  return boundThrum
+}
+
+module.exports = thrum
