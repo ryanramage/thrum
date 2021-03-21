@@ -14,10 +14,18 @@ function play(options, notes, count, length, state) {
     options = {}
   }
   let _msg = { to: 'toMidi' }
-  let i = count % notes.length
-  if (typeof notes === 'function') _msg.note = notes(i)
-  else if (typeof notes === 'string') _msg.note =  notes
-  else _msg.note =  notes[i] // an array
+    if (typeof notes === 'object' && notes.octave && typeof notes.octave === 'function') {
+    notes = notes.octave(4) //
+    let i = count % notes.length
+    _msg.note =  notes[i] // an array
+  } if (typeof notes === 'function') {
+    let i = count % notes.length
+    _msg.note = notes(i)
+  } else if (typeof notes === 'string') _msg.note =  notes
+  else {
+    let i = count % notes.length
+    _msg.note =  notes[i] // an array
+  }
   _msg.length = options.length || length
 
   if (options.velocity) _msg.velocity = options.velocity

@@ -32,7 +32,11 @@ thrum.tick = (tickExpression) => {
   thrum.connect(thrum.setup(), {toMidi, toCC}, tickExpression)
 }
 
-thrum.meter = (meter) => {
+thrum.meter = (meter, noteLength) => {
+  if (typeof meter === 'number') { // if user provides two strings instead of one array
+    meter = [meter, noteLength]
+  }
+
   // bind the meter functions
   const boundThrum = thrum
   boundThrum.bars = thrum.bars(meter)
