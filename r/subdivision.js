@@ -12,6 +12,7 @@ let pattern = /(\d+)([mnt]?)(\.?)/i
 // takes in a string that represents a subdivision 3m, 8n, 4t and converts it to ticks
 
 function Subdivision ([beatsPerBar, noteLength], subdivision) {
+  if (typeof subdivision === 'number') return subdivision
   let [match, number, unit, dot] = subdivision.match(pattern)
   number = Number(number)
 
