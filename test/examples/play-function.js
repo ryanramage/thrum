@@ -21,6 +21,25 @@ test('play a single note, velocity is 10', t => {
   t.end()
 })
 
+
+test('play with channel and length alternate version', t => {
+  // setup
+  let result = null
+  let tick = exp => result = _tick(exp, SongState.set({spp: 0, userState: {}, actions: []}))
+
+  // raw user section
+  tick([
+    repeat('4n', play(length('32n', {channel: 3}),  'C4')) // length and channel
+  ])
+
+  // testing
+  t.ok(result)
+  t.equals(result.actions[0].note, 'C4')
+  t.equals(result.actions[0].length, 3) // very short 32 note
+  t.equals(result.actions[0].channel, 3) // channel
+  t.end()
+})
+
 test('play can use a function to get a note', t => {
   // setup
   let result = null

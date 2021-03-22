@@ -29,7 +29,7 @@ function play(options, notes, count, length, state) {
   _msg.length = options.length || length
 
   if (options.velocity) _msg.velocity = options.velocity
-
+  if (options.channel) _msg.channel = options.channel
 
   state.actions.push(_msg)
   return state
