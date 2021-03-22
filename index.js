@@ -28,9 +28,7 @@ thrum.setup = (options) => rc('thrum', options)
 thrum.connect = require('./lib/connect')
 
 // the main entry into thrum for most people
-thrum.tick = (tickExpression) => {
-  thrum.connect(thrum.setup(), {toMidi, toCC}, tickExpression)
-}
+thrum.tick = (tickExpression, options) => thrum.connect(thrum.setup(options), {toMidi, toCC}, tickExpression)
 
 thrum.meter = (meter, noteLength) => {
   if (typeof meter === 'number') { // if user provides two strings instead of one array

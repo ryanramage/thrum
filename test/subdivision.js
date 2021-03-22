@@ -10,6 +10,11 @@ test('basic subdivisions in 4/4 time', t => {
   t.equals(Subdiv4_4('1n.'), 144)
   t.equals(Subdiv4_4('8t'), 8)
   t.equals(Subdiv4_4('2t'), 32)
+  try {
+    Subdiv4_4('1t', 32)
+    t.fail()
+  } catch (e) { t.ok(e) }
+  t.equals(Subdiv4_4('3C'), 0)
   t.end()
 })
 

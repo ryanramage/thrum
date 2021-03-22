@@ -32,4 +32,5 @@ function Subdivision ([beatsPerBar, noteLength], subdivision) {
     let ticks = lengths[`${baseLength}n`] / 3
     return ticks
   }
+  return 0 // unknown - just return 0
 }

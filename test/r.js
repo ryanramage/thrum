@@ -31,6 +31,5 @@ test('tick with bars', t => {
   ]))(state)
 
   t.equals(output.spp, 0)
-  console.log(state)
   t.end()
 })

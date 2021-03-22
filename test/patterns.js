@@ -10,6 +10,5 @@ test('expandStr', t => {
 test('recursivelyApplyPatternToNotes', t => {
   let patternArr = [ 'x', 'x', '-', [ 'x', 'x', [ 'x', 'x' ] ] ]
   let result = patterns.recursivelyApplyPatternToNotes(patternArr, 24)
-  console.log(result)
   t.end()
 })

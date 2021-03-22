@@ -4,7 +4,7 @@ const Chord = require('../lib/chord.js')
 test('works', t => {
   let chord = Chord('CMaj7')
   t.ok(chord)
-  let notes = chord.notes(3)
+  let notes = chord.octave(3)
   t.deepEquals(notes ['C3', 'E3', 'G3', 'B3'])
   t.end()
 })
@@ -12,7 +12,7 @@ test('works', t => {
 test('inversion', t => {
   let chord = Chord('CMaj7')
   t.ok(chord)
-  let notes = chord.notes(3, 1)
+  let notes = chord.octave(3, 1)
   t.deepEquals(notes ['E3', 'G3', 'B3', 'C4'])
   t.end()
 })
@@ -20,7 +20,15 @@ test('inversion', t => {
 test('inversion with extra notes', t => {
   let chord = Chord('CM')
   t.ok(chord)
-  let notes = chord.notes(3, 0, 4)
+  let notes = chord.octave(3, 0, 4)
   t.deepEquals(notes ['C3', 'E3', 'G3', 'C4'])
+  t.end()
+})
+
+test('a broken chord', t => {
+  let chord = Chord('THIS')
+  t.ok(chord)
+  let notes = chord.octave(3, 0, 4)
+  t.deepEquals(notes, [])
   t.end()
 })
