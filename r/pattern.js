@@ -8,19 +8,16 @@ function ops_clip (compiled, operator, state) {
   let internalSpp = state.spp % compiled.totalLength
   let startTime = 0
   let count = 0
-  let accumulator = null
 
   //  this loop, short circut return
   compiled.clipNotes.forEach((item, i) => {
     let clipIndex = count
     if (!item.rest) count++
     if (count > compiled.xCount) count = 0
-    if (internalSpp == startTime && !item.rest) {
-      if (!item.rest) accumulator = operator(clipIndex, item.length, state)
-    }
+    if (internalSpp == startTime && !item.rest) operator(clipIndex, item.length, state)
     startTime += item.length
   })
-  return accumulator
+  return state
 }
 
 function compile (str, length) {

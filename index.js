@@ -2,7 +2,6 @@ const rc = require('rc')
 const toMidi = require('./lib/toMidi')
 const toCC = require('./lib/toCC')
 
-
 const thrum = {}
 
 // meter functions
@@ -11,7 +10,6 @@ thrum.length = require('./r/length')
 thrum.repeat = require('./r/repeat')
 thrum.lfo = require('./r/lfo')
 thrum.subdivision = require('./r/subdivision')
-thrum.ramp = require('./r/ramp')
 
 // non-meter
 thrum.pattern = require('./r/pattern')
@@ -19,7 +17,6 @@ thrum.play = require('./r/play')
 thrum.strum = require('./r/strum')
 thrum.transpose = require('./r/transpose')
 thrum.Tonal = require('@tonaljs/tonal')
-thrum.frequency = require('./r/frequency')
 thrum.cc = require('./r/cc')
 thrum.chord = require('./lib/chord')
 
@@ -42,7 +39,6 @@ thrum.meter = (meter, noteLength) => {
   boundThrum.repeat = thrum.repeat(meter)
   boundThrum.lfo = thrum.lfo(meter)
   boundThrum.subdivision = thrum.subdivision(meter)
-  boundThrum.ramp = thrum.ramp(meter)
   return boundThrum
 }
 
