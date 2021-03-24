@@ -13,7 +13,6 @@ function play(options, chordNotes, count, _length, state) {
     options = {}
   }
 
-  console.log(options, chordNotes, count, _length)
   let spread = 3
   if (typeof options.spread === 'number') spread = options.spread
   let length = options.length || _length
