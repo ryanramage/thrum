@@ -8,4 +8,5 @@ module.exports = (exp, state) => {
   if (typeof exp === 'function') {
     return exp(state)
   }
+  return state // not sure what this is, just going to ignore
 }

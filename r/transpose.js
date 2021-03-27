@@ -1,14 +1,13 @@
 const R = require('ramda')
-const lengths = require('../lib/lengths')
+const expression = require('../r/expression.js')
 const Tonal = require('@tonaljs/tonal')
 
 module.exports = R.curryN(3, transpose)
 
-function transpose(interval, emitter, state) {
-  emitter(state)
+function transpose(interval, exp, _state) {
+  let state = expression(exp, _state)
   // transpose all the notes
-  state.actions.forEach(a => {
-    if (a.to !== 'toMidi') return
+  state.actions = state.actions.map(a => {
     if (!a.note) return
     a.note = Tonal.Note.transpose(a.note, interval)
   })

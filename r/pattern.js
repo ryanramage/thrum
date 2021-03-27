@@ -13,7 +13,7 @@ function ops_clip (compiled, operator, state) {
   compiled.clipNotes.forEach((item, i) => {
     let clipIndex = count
     if (!item.rest) count++
-    if (count > compiled.xCount) count = 0
+    // if (count > compiled.xCount) count = 0 // I cant find a case for this. commenting out until I do
     if (internalSpp == startTime && !item.rest) operator(clipIndex, item.length, state)
     startTime += item.length
   })

@@ -10,9 +10,7 @@ test('on repeat first tick will play an A4', t => {
 
   // raw user section
   let am = chord('Am')
-  tick([
-    repeat('4n', play(am))
-  ])
+  tick(repeat('4n', play(am)))
 
   // testing
   t.ok(result)
