@@ -16,6 +16,7 @@ function usage() {
 }
 if (!config._[0]) return usage()
 
+let output = null
 midi()
 watch()
 
@@ -40,6 +41,12 @@ function watch () {
   nodemon.on('start', function () {
     console.log('App has started');
   }).on('quit', function () {
+    if (output) {
+      for (let i=0; i<16; i++) {
+        output.allNotesOff(i)
+      }
+      output.close()
+    }
     console.log('App has quit');
     process.exit();
   }).on('restart', function (files) {
@@ -48,6 +55,21 @@ function watch () {
 }
 
 function midi () {
+  if (config.midiThru) {
+    if (config.outputs) {
+      Object.keys(config.outputs).forEach(out => {
+        let name = config.outputs[out]
+        console.log('connecting to livecoding output to', name)
+        output = JZZ().openMidiOut(name)
+      })
+    } else {
+      // just connect to a single output
+      let name = config.out
+      console.log('connecting to livecoding output to', name)
+      output = JZZ().openMidiOut(name)
+    }
+  }
+
   let selectedInput = config.in
   if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
   if (!selectedInput) {
@@ -57,14 +79,17 @@ function midi () {
 
   JZZ().or('Cannot start MIDI engine!')
   const input = JZZ().openMidiIn(selectedInput)
-  const output = JZZ().openMidiOut(selectedInput)
 
-  console.log('connected to midi clock on', selectedInput)
+  console.log('connected livecoding midi clock on', selectedInput)
 
   let spp = 0
   let broadcasting = false
 
   input.connect(msg => {
+    if (output) {
+      console.log('sending clock')
+      output.send(msg) // send the msg to the out
+    }
     switch (msg[0]) {
       // Clock
       case 0xF2:
@@ -76,13 +101,13 @@ function midi () {
         spp++
         break
       case 0xFA:
-        console.log('MIDI', 'Start Received')
+        console.log('MIDI', 'Livecoding Start Received')
         break
       case 0xFB:
-        console.log('MIDI', 'Continue Received')
+        console.log('MIDI', 'Livecoding Continue Received')
         break
       case 0xFC:
-        console.log('MIDI', 'Stop Received')
+        console.log('MIDI', 'Livecoding Stop Received')
         break
       default:
         break
@@ -93,7 +118,7 @@ function midi () {
     console.log('got a request', spp)
     let songPosition = Math.floor(spp / 6)
     broadcasting = true
-    output.send(JZZ.MIDI.songPosition(songPosition))
+    if (output) output.send(JZZ.MIDI.songPosition(songPosition))
     resp.end('ok')
   })
   server.listen(config.port, err => {
