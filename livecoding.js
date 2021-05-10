@@ -86,10 +86,7 @@ function midi () {
   let broadcasting = false
 
   input.connect(msg => {
-    if (output) {
-      console.log('sending clock')
-      output.send(msg) // send the msg to the out
-    }
+    if (output) output.send(msg) // send the msg to the out
     switch (msg[0]) {
       // Clock
       case 0xF2:
