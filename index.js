@@ -93,6 +93,11 @@ thrum.meter = (meter, noteLength) => {
   boundThrum.repeat = thrum.repeat(meter)
   boundThrum.lfo = thrum.lfo(meter)
   boundThrum.subdivision = thrum.subdivision(meter)
+  
+  // Add shortcuts
+  const shortcuts = require('./r/shortcuts')(meter)
+  Object.assign(boundThrum, shortcuts)
+  
   return boundThrum
 }
 

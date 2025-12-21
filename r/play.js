@@ -26,7 +26,10 @@ function play(options, notes, count, length, state) {
     let i = count % notes.length
     _msg.note =  notes[i] // an array
   }
-  _msg.length = options.length || length
+  
+  // Smart defaults
+  _msg.length = options.length || length || 96 // default to quarter note (96 ticks)
+  _msg.velocity = options.velocity || 100 // default velocity
 
   if (options.velocity) _msg.velocity = options.velocity
   if (options.channel) _msg.channel = options.channel

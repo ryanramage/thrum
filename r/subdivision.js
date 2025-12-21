@@ -13,6 +13,36 @@ let pattern = /(\d+)([mnt]?)(\.?)/i
 
 function Subdivision ([beatsPerBar, noteLength], subdivision) {
   if (typeof subdivision === 'number') return subdivision
+  
+  // Natural language shortcuts
+  const naturalLanguage = {
+    'beat': lengths[noteLength],
+    'beats': lengths[noteLength],
+    'bar': beatsPerBar * lengths[noteLength],
+    'bars': beatsPerBar * lengths[noteLength],
+    'measure': beatsPerBar * lengths[noteLength],
+    'measures': beatsPerBar * lengths[noteLength],
+    'whole': lengths['1n'],
+    'half': lengths['2n'],
+    'quarter': lengths['4n'],
+    'eighth': lengths['8n'],
+    'sixteenth': lengths['16n'],
+    'thirtysecond': lengths['32n']
+  }
+  
+  // Check for natural language with multipliers like "2 bars", "4 beats"
+  const multiMatch = subdivision.match(/^(\d+)\s+(bar|bars|beat|beats|measure|measures)$/)
+  if (multiMatch) {
+    const multiplier = Number(multiMatch[1])
+    const unit = multiMatch[2]
+    return multiplier * naturalLanguage[unit]
+  }
+  
+  // Check for simple natural language
+  if (naturalLanguage[subdivision]) {
+    return naturalLanguage[subdivision]
+  }
+  
   let [match, number, unit, dot] = subdivision.match(pattern)
   number = Number(number)
 
