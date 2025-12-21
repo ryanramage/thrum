@@ -15,7 +15,7 @@ function usage() {
   
   // Initialize MIDI engine and wait for it
   JZZ().or('Cannot start MIDI engine!')
-    .and(() => {
+    .and(function() {
       try {
         const midiInfo = JZZ().info()
         console.log('DEBUG: MIDI info object:', midiInfo)
@@ -36,8 +36,8 @@ function usage() {
 if (!config._[0]) return usage()
 
 let outputs = {}
-midi()
 watch()
+midi()
 
 
 function watch () {
@@ -79,128 +79,131 @@ function watch () {
 }
 
 function midi () {
-  JZZ().or('Cannot start MIDI engine!')
-    .and(() => {
-      console.log('MIDI', 'Engine initialized:', JZZ().info().engine)
-      
-      if (config.midiThru) {
-        if (config.outputs) {
-          Object.keys(config.outputs).forEach(out => {
-            let name = config.outputs[out]
-            console.log('connecting to livecoding output to', name)
-            outputs[out] = JZZ().openMidiOut(name)
-          })
-        } else {
-          // just connect to a single output
-          let name = config.out
-          console.log('connecting to livecoding output to', name)
-          outputs['default'] = JZZ().openMidiOut(name)
-        }
-      }
-
-      let selectedInput = config.in
-      if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
-      if (!selectedInput) {
-        let inputs = JZZ().info().inputs
-        if (inputs && inputs.length) selectedInput = inputs[0].name
-      }
-
-      if (!selectedInput) {
-        console.log('No MIDI input found')
-        usage()
-        return
-      }
-
-      console.log('MIDI', 'Attempting to connect to input:', selectedInput)
-      
-      JZZ().openMidiIn(selectedInput)
-        .or(() => {
-          console.log('MIDI', 'ERROR: Failed to open MIDI input:', selectedInput)
+  console.log('MIDI', 'Initializing MIDI engine...')
+  
+  JZZ().or(function(err) {
+    console.log('MIDI', 'ERROR: Cannot start MIDI engine!', err)
+  }).and(function() {
+    console.log('MIDI', 'Engine initialized:', JZZ().info().engine)
+    
+    if (config.midiThru) {
+      if (config.outputs) {
+        Object.keys(config.outputs).forEach(out => {
+          let name = config.outputs[out]
+          console.log('MIDI', 'connecting to livecoding output to', name)
+          outputs[out] = JZZ().openMidiOut(name)
         })
-        .and((input) => {
-          console.log('MIDI', 'Successfully opened MIDI input:', selectedInput)
-          console.log('MIDI', 'Available inputs:', JZZ().info().inputs.map(i => i.name).join(', '))
+      } else {
+        // just connect to a single output
+        let name = config.out
+        console.log('MIDI', 'connecting to livecoding output to', name)
+        outputs['default'] = JZZ().openMidiOut(name)
+      }
+    }
+
+    let selectedInput = config.in
+    if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
+    if (!selectedInput) {
+      let inputs = JZZ().info().inputs
+      if (inputs && inputs.length) selectedInput = inputs[0].name
+    }
+
+    if (!selectedInput) {
+      console.log('MIDI', 'No MIDI input found')
+      usage()
+      return
+    }
+
+    console.log('MIDI', 'Attempting to connect to input:', selectedInput)
+    
+    JZZ().openMidiIn(selectedInput)
+      .or(function(err) {
+        console.log('MIDI', 'ERROR: Failed to open MIDI input:', selectedInput, err)
+      })
+      .and(function(input) {
+        console.log('MIDI', 'Successfully opened MIDI input:', selectedInput)
+        console.log('MIDI', 'Available inputs:', JZZ().info().inputs.map(i => i.name).join(', '))
+        
+        if (Object.keys(outputs).length > 0) {
+          console.log('MIDI', 'Connected outputs:', Object.keys(outputs).map(key => `${key}: ${config.outputs ? config.outputs[key] : config.out}`).join(', '))
+        } else {
+          console.log('MIDI', 'No MIDI outputs configured (midiThru disabled)')
+        }
+
+        let spp = 0
+        let broadcasting = false
+
+        input.connect(function(msg) {
+          // Log ALL incoming MIDI messages for debugging
+          console.log('MIDI', `Raw message received: [${msg.map(b => '0x' + b.toString(16).toUpperCase()).join(', ')}]`)
+          
+          // send the msg to all outputs
+          Object.keys(outputs).forEach(key => {
+            if (outputs[key]) outputs[key].send(msg)
+          })
+          
+          switch (msg[0]) {
+            // Clock
+            case 0xF2:
+              let songPosition = (msg[2] << 7) + msg[1] // data2 is msb, data1 is lsb
+              console.log('MIDI', `Song Position Pointer received: ${songPosition} (SPP: ${songPosition * 6})`)
+              if (broadcasting) {
+                console.log('MIDI', 'Ignoring SPP - currently broadcasting')
+                broadcasting = false
+              } else {
+                spp = (songPosition * 6)
+                console.log('MIDI', `SPP updated to: ${spp}`)
+              }
+              break
+            case 0xF8:
+              spp++
+              // Log every 24 ticks (1 beat) to avoid spam
+              if (spp % 24 === 0) {
+                console.log('MIDI', `Clock tick - SPP: ${spp} (beat: ${Math.floor(spp / 24)})`)
+              }
+              break
+            case 0xFA:
+              console.log('MIDI', 'Start Received - SPP reset to 0')
+              spp = 0
+              break
+            case 0xFB:
+              console.log('MIDI', 'Continue Received')
+              break
+            case 0xFC:
+              console.log('MIDI', 'Stop Received')
+              break
+            default:
+              // Log other MIDI messages for debugging
+              if (msg[0] >= 0xF0) {
+                console.log('MIDI', `System message: 0x${msg[0].toString(16).toUpperCase()}`, msg)
+              }
+              break
+          }
+        })
+
+        const server = http.createServer((req, resp) => {
+          let songPosition = Math.floor(spp / 6)
+          console.log('HTTP', `Reload request received - Current SPP: ${spp}, Song Position: ${songPosition}`)
+          broadcasting = true
           
           if (Object.keys(outputs).length > 0) {
-            console.log('MIDI', 'Connected outputs:', Object.keys(outputs).map(key => `${key}: ${config.outputs ? config.outputs[key] : config.out}`).join(', '))
-          } else {
-            console.log('MIDI', 'No MIDI outputs configured (midiThru disabled)')
-          }
-
-          let spp = 0
-          let broadcasting = false
-
-          input.connect(msg => {
-            // Log ALL incoming MIDI messages for debugging
-            console.log('MIDI', `Raw message received: [${msg.map(b => '0x' + b.toString(16).toUpperCase()).join(', ')}]`)
-            
-            // send the msg to all outputs
             Object.keys(outputs).forEach(key => {
-              if (outputs[key]) outputs[key].send(msg)
+              if (outputs[key]) {
+                console.log('MIDI', `Sending SPP ${songPosition} to output: ${key}`)
+                outputs[key].send(JZZ.MIDI.songPosition(songPosition))
+              }
             })
-            
-            switch (msg[0]) {
-              // Clock
-              case 0xF2:
-                let songPosition = (msg[2] << 7) + msg[1] // data2 is msb, data1 is lsb
-                console.log('MIDI', `Song Position Pointer received: ${songPosition} (SPP: ${songPosition * 6})`)
-                if (broadcasting) {
-                  console.log('MIDI', 'Ignoring SPP - currently broadcasting')
-                  broadcasting = false
-                } else {
-                  spp = (songPosition * 6)
-                  console.log('MIDI', `SPP updated to: ${spp}`)
-                }
-                break
-              case 0xF8:
-                spp++
-                // Log every 24 ticks (1 beat) to avoid spam
-                if (spp % 24 === 0) {
-                  console.log('MIDI', `Clock tick - SPP: ${spp} (beat: ${Math.floor(spp / 24)})`)
-                }
-                break
-              case 0xFA:
-                console.log('MIDI', 'Start Received - SPP reset to 0')
-                spp = 0
-                break
-              case 0xFB:
-                console.log('MIDI', 'Continue Received')
-                break
-              case 0xFC:
-                console.log('MIDI', 'Stop Received')
-                break
-              default:
-                // Log other MIDI messages for debugging
-                if (msg[0] >= 0xF0) {
-                  console.log('MIDI', `System message: 0x${msg[0].toString(16).toUpperCase()}`, msg)
-                }
-                break
-            }
-          })
-
-          const server = http.createServer((req, resp) => {
-            let songPosition = Math.floor(spp / 6)
-            console.log('HTTP', `Reload request received - Current SPP: ${spp}, Song Position: ${songPosition}`)
-            broadcasting = true
-            
-            if (Object.keys(outputs).length > 0) {
-              Object.keys(outputs).forEach(key => {
-                if (outputs[key]) {
-                  console.log('MIDI', `Sending SPP ${songPosition} to output: ${key}`)
-                  outputs[key].send(JZZ.MIDI.songPosition(songPosition))
-                }
-              })
-            } else {
-              console.log('MIDI', 'No outputs to send SPP to')
-            }
-            
-            resp.end('ok')
-          })
-          server.listen(config.port, err => {
-            if (err) console.log(err) && process.exit(1)
-            console.log('HTTP', `Livecoding reload server running on port ${config.port}`)
-            console.log('HTTP', `Send GET request to http://localhost:${config.port} to trigger reload`)
-          })
+          } else {
+            console.log('MIDI', 'No outputs to send SPP to')
+          }
+          
+          resp.end('ok')
         })
-    })
+        server.listen(config.port, err => {
+          if (err) console.log(err) && process.exit(1)
+          console.log('HTTP', `Livecoding reload server running on port ${config.port}`)
+          console.log('HTTP', `Send GET request to http://localhost:${config.port} to trigger reload`)
+        })
+      })
+  })
 }
