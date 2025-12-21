@@ -7,7 +7,10 @@ function play(options, notes, count, length, state) {
   // Handle different calling patterns
   if (!state) {
     // Check if we're being called with fewer arguments (from shortcuts)
-    if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+    if (typeof options === 'object' && typeof notes === 'string' && typeof count === 'number' && typeof length === 'number' && arguments.length === 4) {
+      // Called as play({}, note, count, length) - missing state, need to return curried function
+      return (st) => play(options, notes, count, length, st)
+    } else if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
       // Called as play(note, count, length, state)
       state = length
       length = count
