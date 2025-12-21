@@ -6,6 +6,7 @@ const structure = require('./lib/structure')
 const track = require('./lib/track')
 const simulator = require('./lib/simulator')
 const { State } = require('./lib/state')
+const shortcuts = require('./lib/shortcuts')
 
 module.exports = {
   song,
@@ -14,5 +15,6 @@ module.exports = {
   structure,
   track,
   simulator,
-  State
+  State,
+  shortcuts
 }

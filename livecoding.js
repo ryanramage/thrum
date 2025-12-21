@@ -1,209 +1,292 @@
 #!/usr/bin/env node
 const JZZ = require('jzz')
-const path = require('path')
 const fs = require('fs')
+const path = require('path')
 const http = require('http')
-const nodemon = require('nodemon');
 const config = require('rc')('thrum', {
   port: 5551,
   inputs: {}
 })
 
-function usage() {
-  console.log('Usage: thrum file.js')
-  console.log('Available midi ports:')
-  
-  // Initialize MIDI engine and wait for it
-  JZZ().or('Cannot start MIDI engine!')
-    .and(function() {
-      try {
-        const midiInfo = JZZ().info()
-        console.log('DEBUG: MIDI info object:', midiInfo)
-        
-        if (midiInfo.inputs && midiInfo.inputs.length > 0) {
-          console.log(midiInfo.inputs.map(i => i.name))
-        } else {
-          console.log('No MIDI inputs found')
-          console.log('DEBUG: Engine:', midiInfo.engine)
-          console.log('DEBUG: Inputs array:', midiInfo.inputs)
-        }
-      } catch (error) {
-        console.log('Error getting MIDI info:', error)
+let currentSong = null
+let musicFilePath = null
+let midiOut = null
+let tempo = 120 // Default tempo, can be overridden by song
+
+function loadMusicFile(filePath) {
+  try {
+    // Clear the require cache to reload the module
+    const resolvedPath = require.resolve(path.resolve(filePath))
+    delete require.cache[resolvedPath]
+    
+    // Also clear cache for any thrum modules that might be cached
+    Object.keys(require.cache).forEach(key => {
+      if (key.includes('thrum') && !key.includes('node_modules')) {
+        delete require.cache[key]
       }
     })
+    
+    // Load the music file
+    const musicModule = require(path.resolve(filePath))
+    currentSong = musicModule
+    
+    // Update tempo if song provides it
+    if (currentSong.tempo) {
+      tempo = currentSong.tempo
+      console.log('Updated tempo to:', tempo)
+    }
+    
+    console.log('Loaded music file:', filePath)
+    return true
+  } catch (error) {
+    console.error('Error loading music file:', error.message)
+    console.error(error.stack)
+    return false
+  }
 }
 
-if (!config._[0]) return usage()
-
-let outputs = {}
-watch()
-midi()
-
-
-function watch () {
-  let selectedInput = config._[0]
-  if (!selectedInput) {
-    console.log('No watch files provided.')
-    return
-  }
-
-  // users can just npm i thrum -g,
-  // to save the user a npm i (in the thrum dir)
-  // we add the __filename to the node_path env variable
-  let node_path = path.resolve(__filename, '../..')
-  nodemon({
-    script: selectedInput,
-    env: {
-      'NODE_PATH': node_path
+function watchMusicFile(filePath) {
+  console.log('Watching file for changes:', filePath)
+  
+  fs.watch(filePath, (eventType, filename) => {
+    if (eventType === 'change') {
+      console.log('File changed, reloading...')
+      loadMusicFile(filePath)
     }
   })
-  nodemon.on('start', function () {
-    console.log('App has started');
-  }).on('quit', function () {
-    // Clean up all MIDI outputs
-    Object.keys(outputs).forEach(key => {
-      let output = outputs[key]
-      if (output) {
-        for (let i=0; i<16; i++) {
-          output.send([0xB0 + i, 123, 0]) // All Notes Off
-          output.send([0xB0 + i, 120, 0]) // All Sound Off
-        }
-        output.close()
-      }
-    })
-    console.log('App has quit');
-    process.exit();
-  }).on('restart', function (files) {
-    console.log('App restarted due to: ', files);
-  })
 }
 
-function midi () {
-  console.log('MIDI', 'Initializing MIDI engine...')
+function startLiveCoding(filePath) {
+  musicFilePath = path.resolve(filePath)
+  
+  // Check if file exists
+  if (!fs.existsSync(musicFilePath)) {
+    console.error('File not found:', musicFilePath)
+    process.exit(1)
+  }
+  
+  // Initial load
+  if (!loadMusicFile(musicFilePath)) {
+    console.error('Failed to load music file')
+    process.exit(1)
+  }
+  
+  // Watch for changes
+  watchMusicFile(musicFilePath)
+  
+  // Initialize MIDI
+  initMIDI()
+}
+
+function initMIDI() {
+  console.log('MIDI: Initializing...')
   
   JZZ().or(function(err) {
-    console.log('MIDI', 'ERROR: Cannot start MIDI engine!', err)
+    console.error('MIDI: Cannot start engine!', err)
+    process.exit(1)
   }).and(function() {
-    console.log('MIDI', 'Engine initialized:', JZZ().info().engine)
+    console.log('MIDI: Engine initialized:', JZZ().info().engine)
     
-    if (config.midiThru) {
-      if (config.outputs) {
-        Object.keys(config.outputs).forEach(out => {
-          let name = config.outputs[out]
-          console.log('MIDI', 'connecting to livecoding output to', name)
-          outputs[out] = JZZ().openMidiOut(name)
-        })
-      } else {
-        // just connect to a single output
-        let name = config.out
-        console.log('MIDI', 'connecting to livecoding output to', name)
-        outputs['default'] = JZZ().openMidiOut(name)
-      }
-    }
-
+    // Find input
     let selectedInput = config.in
-    if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
     if (!selectedInput) {
-      let inputs = JZZ().info().inputs
+      const inputs = JZZ().info().inputs
       if (inputs && inputs.length) selectedInput = inputs[0].name
     }
-
-    if (!selectedInput) {
-      console.log('MIDI', 'No MIDI input found')
-      usage()
-      return
-    }
-
-    console.log('MIDI', 'Attempting to connect to input:', selectedInput)
     
-    JZZ().openMidiIn(selectedInput)
-      .or(function(err) {
-        console.log('MIDI', 'ERROR: Failed to open MIDI input:', selectedInput, err)
-      })
-      .and(function(input) {
-        console.log('MIDI', 'Successfully opened MIDI input:', selectedInput)
-        console.log('MIDI', 'Available inputs:', JZZ().info().inputs.map(i => i.name).join(', '))
-        
-        if (Object.keys(outputs).length > 0) {
-          console.log('MIDI', 'Connected outputs:', Object.keys(outputs).map(key => `${key}: ${config.outputs ? config.outputs[key] : config.out}`).join(', '))
-        } else {
-          console.log('MIDI', 'No MIDI outputs configured (midiThru disabled)')
+    if (!selectedInput) {
+      console.error('MIDI: No input found')
+      console.log('Available inputs:', JZZ().info().inputs)
+      process.exit(1)
+    }
+    
+    // Find output
+    let selectedOutput = config.out
+    if (!selectedOutput) {
+      const outputs = JZZ().info().outputs
+      if (outputs && outputs.length) selectedOutput = outputs[0].name
+    }
+    
+    console.log('MIDI: Opening input:', selectedInput)
+    if (selectedOutput) {
+      console.log('MIDI: Opening output:', selectedOutput)
+    } else {
+      console.log('MIDI: No output configured (will not send MIDI)')
+    }
+    
+    JZZ().openMidiIn(selectedInput).or(function(err) {
+      console.error('MIDI: Failed to open input:', err)
+      process.exit(1)
+    }).and(function(midiIn) {
+      console.log('MIDI: Input opened successfully')
+      
+      // Open output if configured
+      if (selectedOutput) {
+        midiOut = JZZ().openMidiOut(selectedOutput)
+        console.log('MIDI: Output opened successfully')
+      }
+      
+      let spp = 0 // Song position in ticks
+      let lastLoggedBeat = -1
+      
+      midiIn.connect(function(msg) {
+        switch (msg[0]) {
+          case 0xF8: // Clock tick
+            spp++
+            onClockTick(spp)
+            
+            // Log every beat for debugging
+            const currentBeat = Math.floor(spp / 24)
+            if (currentBeat !== lastLoggedBeat) {
+              console.log('Beat:', currentBeat, 'Bar:', Math.floor(currentBeat / 4))
+              lastLoggedBeat = currentBeat
+            }
+            break
+          case 0xFA: // Start
+            console.log('MIDI: Start received')
+            spp = 0
+            lastLoggedBeat = -1
+            break
+          case 0xFB: // Continue
+            console.log('MIDI: Continue received')
+            break
+          case 0xFC: // Stop
+            console.log('MIDI: Stop received')
+            // Send all notes off
+            if (midiOut) {
+              for (let i = 0; i < 16; i++) {
+                midiOut.send([0xB0 + i, 123, 0]) // All Notes Off
+                midiOut.send([0xB0 + i, 120, 0]) // All Sound Off
+              }
+            }
+            break
+          case 0xF2: // Song Position Pointer
+            const songPosition = (msg[2] << 7) + msg[1]
+            spp = songPosition * 6
+            lastLoggedBeat = -1
+            console.log('MIDI: SPP received:', spp, 'ticks')
+            break
         }
-
-        let spp = 0
-        let broadcasting = false
-
-        input.connect(function(msg) {
-          // Log ALL incoming MIDI messages for debugging
-          console.log('MIDI', `Raw message received: [${msg.map(b => '0x' + b.toString(16).toUpperCase()).join(', ')}]`)
-          
-          // send the msg to all outputs
-          Object.keys(outputs).forEach(key => {
-            if (outputs[key]) outputs[key].send(msg)
-          })
-          
-          switch (msg[0]) {
-            // Clock
-            case 0xF2:
-              let songPosition = (msg[2] << 7) + msg[1] // data2 is msb, data1 is lsb
-              console.log('MIDI', `Song Position Pointer received: ${songPosition} (SPP: ${songPosition * 6})`)
-              if (broadcasting) {
-                console.log('MIDI', 'Ignoring SPP - currently broadcasting')
-                broadcasting = false
-              } else {
-                spp = (songPosition * 6)
-                console.log('MIDI', `SPP updated to: ${spp}`)
-              }
-              break
-            case 0xF8:
-              spp++
-              // Log every 24 ticks (1 beat) to avoid spam
-              if (spp % 24 === 0) {
-                console.log('MIDI', `Clock tick - SPP: ${spp} (beat: ${Math.floor(spp / 24)})`)
-              }
-              break
-            case 0xFA:
-              console.log('MIDI', 'Start Received - SPP reset to 0')
-              spp = 0
-              break
-            case 0xFB:
-              console.log('MIDI', 'Continue Received')
-              break
-            case 0xFC:
-              console.log('MIDI', 'Stop Received')
-              break
-            default:
-              // Log other MIDI messages for debugging
-              if (msg[0] >= 0xF0) {
-                console.log('MIDI', `System message: 0x${msg[0].toString(16).toUpperCase()}`, msg)
-              }
-              break
-          }
-        })
-
-        const server = http.createServer((req, resp) => {
-          let songPosition = Math.floor(spp / 6)
-          console.log('HTTP', `Reload request received - Current SPP: ${spp}, Song Position: ${songPosition}`)
-          broadcasting = true
-          
-          if (Object.keys(outputs).length > 0) {
-            Object.keys(outputs).forEach(key => {
-              if (outputs[key]) {
-                console.log('MIDI', `Sending SPP ${songPosition} to output: ${key}`)
-                outputs[key].send(JZZ.MIDI.songPosition(songPosition))
-              }
-            })
-          } else {
-            console.log('MIDI', 'No outputs to send SPP to')
-          }
-          
-          resp.end('ok')
-        })
-        server.listen(config.port, err => {
-          if (err) console.log(err) && process.exit(1)
-          console.log('HTTP', `Livecoding reload server running on port ${config.port}`)
-          console.log('HTTP', `Send GET request to http://localhost:${config.port} to trigger reload`)
-        })
       })
+      
+      console.log('MIDI: Ready and listening for clock messages')
+      console.log('HTTP: Reload server running on port', config.port)
+      console.log('HTTP: Send GET request to http://localhost:' + config.port + ' to trigger reload')
+      
+      // HTTP reload endpoint
+      const server = http.createServer(function(req, resp) {
+        console.log('HTTP: Reload requested')
+        if (loadMusicFile(musicFilePath)) {
+          resp.end('ok - reloaded')
+        } else {
+          resp.end('error - check console')
+        }
+      })
+      server.listen(config.port, function(err) {
+        if (err) {
+          console.error('HTTP: Failed to start server:', err)
+          process.exit(1)
+        }
+      })
+    })
   })
+}
+
+function onClockTick(spp) {
+  if (!currentSong) return
+  
+  // Calculate bar, beat, tick from spp
+  const tick = spp % 24
+  const beat = Math.floor(spp / 24) % 4
+  const bar = Math.floor(spp / 96)
+  
+  const state = {
+    tick,
+    beat,
+    bar,
+    absoluteTick: spp
+  }
+  
+  try {
+    // Execute the song
+    const result = currentSong.tick ? currentSong.tick(state) : null
+    
+    // Send MIDI messages
+    if (result && result.actions && midiOut) {
+      result.actions.forEach(function(action) {
+        if (action.type === 'note') {
+          const channel = action.channel !== undefined ? action.channel : 0
+          const velocity = action.velocity !== undefined ? action.velocity : 100
+          const note = action.note
+          const length = action.length !== undefined ? action.length : 24
+          
+          // Send note on
+          midiOut.send([0x90 + channel, note, velocity])
+          
+          // Calculate note off time in milliseconds
+          // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
+          const msPerTick = (60000 / tempo) / 24
+          const noteOffTime = length * msPerTick
+          
+          // Schedule note off
+          setTimeout(function() {
+            midiOut.send([0x80 + channel, note, 0])
+          }, noteOffTime)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Error executing song:', error.message)
+    console.error(error.stack)
+  }
+}
+
+// Handle graceful shutdown
+process.on('SIGINT', function() {
+  console.log('\nShutting down...')
+  
+  // Send all notes off
+  if (midiOut) {
+    for (let i = 0; i < 16; i++) {
+      midiOut.send([0xB0 + i, 123, 0])
+      midiOut.send([0xB0 + i, 120, 0])
+    }
+  }
+  
+  process.exit(0)
+})
+
+// Start
+if (!config._[0]) {
+  console.log('Usage: thrum file.js')
+  console.log('Available MIDI ports:')
+  
+  JZZ().or('Cannot start MIDI engine!').and(function() {
+    const info = JZZ().info()
+    console.log('\nInputs:')
+    if (info.inputs && info.inputs.length > 0) {
+      info.inputs.forEach(function(input) {
+        console.log('  -', input.name)
+      })
+    } else {
+      console.log('  (none)')
+    }
+    
+    console.log('\nOutputs:')
+    if (info.outputs && info.outputs.length > 0) {
+      info.outputs.forEach(function(output) {
+        console.log('  -', output.name)
+      })
+    } else {
+      console.log('  (none)')
+    }
+    
+    console.log('\nConfigure with .thrumrc file:')
+    console.log('{')
+    console.log('  "in": "Your MIDI Input Name",')
+    console.log('  "out": "Your MIDI Output Name"')
+    console.log('}')
+  })
+} else {
+  startLiveCoding(config._[0])
 }
