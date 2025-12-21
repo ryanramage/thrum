@@ -1,5 +1,14 @@
 const lengths = require('../lib/lengths')
 
+// Helper to detect if first arg is an options object
+function isOptionsObject(arg) {
+  return typeof arg === 'object' && 
+         !Array.isArray(arg) && 
+         arg !== null &&
+         (!arg.octave || typeof arg.octave !== 'function') &&
+         (arg.length !== undefined || arg.velocity !== undefined || arg.channel !== undefined)
+}
+
 // Main export - simple function that handles all cases
 module.exports = function play(arg1, arg2, arg3, arg4, arg5) {
   let options, notes, count, length, state
@@ -26,10 +35,17 @@ module.exports = function play(arg1, arg2, arg3, arg4, arg5) {
       return play(arg1, arg2, arg3, state)
     }
   } else if (arg2 !== undefined) {
-    // 2 arguments: partially applied, return a function
-    // This handles: play(notes, count) => (length, state) => ...
-    return function(length, state) {
-      return play(arg1, arg2, length, state)
+    // 2 arguments: check if first is options
+    if (isOptionsObject(arg1)) {
+      // play(options, notes) => (count, length, state) => ...
+      return function(count, length, state) {
+        return play(arg1, arg2, count, length, state)
+      }
+    } else {
+      // play(notes, count) => (length, state) => ...
+      return function(length, state) {
+        return play(arg1, arg2, length, state)
+      }
     }
   } else if (arg1 !== undefined) {
     // 1 argument: partially applied, return a function
