@@ -30,12 +30,17 @@ function pattern(str) {
 
 function compile(str) {
   const chars = str.split('')
-  const length = chars.length * 24 // Each char is a 16th note (24 ticks)
+  const ticksPerChar = 24 // Each char is a 16th note (24 ticks)
+  const length = chars.length * ticksPerChar
   const hits = {}
   
   chars.forEach((char, i) => {
     if (char === 'x') {
-      hits[i * 24] = true
+      // Mark all ticks in this 16th note as hits
+      const startTick = i * ticksPerChar
+      for (let tick = startTick; tick < startTick + ticksPerChar; tick++) {
+        hits[tick] = true
+      }
     }
   })
   
