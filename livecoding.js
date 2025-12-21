@@ -13,26 +13,26 @@ function usage() {
   console.log('Usage: thrum file.js')
   console.log('Available midi ports:')
   
-  try {
-    console.log('DEBUG: Initializing MIDI engine...')
-    JZZ().or('Cannot start MIDI engine!')
-    console.log('DEBUG: MIDI engine initialized successfully')
-    
-    const midiInfo = JZZ().info()
-    console.log('DEBUG: MIDI info object:', midiInfo)
-    console.log('DEBUG: Raw inputs array:', midiInfo.inputs)
-    
-    if (midiInfo.inputs && midiInfo.inputs.length > 0) {
-      console.log('DEBUG: Found', midiInfo.inputs.length, 'inputs')
-      console.log(midiInfo.inputs.map(i => i.name))
-    } else {
-      console.log('DEBUG: No MIDI inputs found or inputs array is empty')
-      console.log('DEBUG: Inputs type:', typeof midiInfo.inputs)
-      console.log('DEBUG: Inputs length:', midiInfo.inputs ? midiInfo.inputs.length : 'undefined')
+  // Initialize MIDI engine the same way as midi() function
+  JZZ().or('Cannot start MIDI engine!')
+  
+  // Add a small delay to ensure MIDI engine is fully initialized
+  setTimeout(() => {
+    try {
+      const midiInfo = JZZ().info()
+      console.log('DEBUG: MIDI info object:', midiInfo)
+      
+      if (midiInfo.inputs && midiInfo.inputs.length > 0) {
+        console.log(midiInfo.inputs.map(i => i.name))
+      } else {
+        console.log('No MIDI inputs found')
+        console.log('DEBUG: Engine:', midiInfo.engine)
+        console.log('DEBUG: Inputs array:', midiInfo.inputs)
+      }
+    } catch (error) {
+      console.log('Error getting MIDI info:', error)
     }
-  } catch (error) {
-    console.log('DEBUG: Error during MIDI initialization:', error)
-  }
+  }, 100)
 }
 if (!config._[0]) return usage()
 
