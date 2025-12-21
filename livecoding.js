@@ -12,6 +12,7 @@ const config = require('rc')('thrum', {
 function usage() {
   console.log('Usage: thrum file.js')
   console.log('Available midi ports:')
+  JZZ().or('Cannot start MIDI engine!')
   console.log(JZZ().info().inputs.map(i => i.name))
 }
 if (!config._[0]) return usage()
@@ -60,6 +61,8 @@ function watch () {
 }
 
 function midi () {
+  JZZ().or('Cannot start MIDI engine!')
+  
   if (config.midiThru) {
     if (config.outputs) {
       Object.keys(config.outputs).forEach(out => {
@@ -89,7 +92,6 @@ function midi () {
   }
 
   console.log('MIDI', 'Attempting to connect to input:', selectedInput)
-  JZZ().or('Cannot start MIDI engine!')
   const input = JZZ().openMidiIn(selectedInput)
 
   console.log('MIDI', 'Connected to input:', selectedInput)
