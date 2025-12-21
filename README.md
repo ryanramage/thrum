@@ -183,3 +183,44 @@ Daw
 I use reaper for my daw, and thrum works very well for it
 
 Thrum listens on the midi input defined in step 3 for midi clock events. Something has to generate those. Your DAW or master device will do the trick. In your daw, you will have to create instruments on tracks that will listen for midi events on each channel you want. This will play the midi notes that thrum generates.
+
+Testing and Development
+-------------------------------------------------
+
+### Simulator
+
+Thrum includes a simulator that lets you test and develop songs without MIDI hardware. This is useful for:
+
+- Writing unit tests for your songs
+- Debugging timing and pattern issues
+- Visualizing patterns before playing them
+- Running in CI/CD environments
+
+Example usage:
+
+```javascript
+const simulator = require('thrum/lib-next/simulator')
+const song = require('thrum/lib-next/song')
+const pattern = require('thrum/lib-next/pattern')
+const midi = require('thrum/lib-next/midi')
+
+// Create a song
+const kick = pattern.pattern('x---x---').play(midi.note('C2'))
+const mySong = song.create([kick], { tempo: 120 })
+
+// Create simulator
+const sim = simulator.create(mySong)
+
+// Run for 4 bars
+const results = sim.run(4)
+console.log(`Generated ${results.length} events`)
+
+// Get timeline with timing info
+const timeline = sim.timeline(4)
+console.log(`Duration: ${timeline.metadata.durationSeconds}s`)
+
+// Visualize the pattern
+console.log(sim.visualize(4))
+```
+
+See `examples/simulator-demo.js` for a complete example.
