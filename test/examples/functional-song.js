@@ -1,5 +1,5 @@
 const test = require('tape')
-const { bars, repeat, pattern, play, strum, transpose, chord, lfo, cc, Tonal, test: thrumTest } = require('../../index').meter(4, '4n')
+const { bars, repeat, pattern, play, strum, transpose, chord, lfo, cc, Tonal, test: thrumTest, create } = require('../../index').meter(4, '4n')
 
 test('functional song - verse with bass and chords', t => {
   // A funky verse with bass line and chord stabs
@@ -172,8 +172,7 @@ test('functional song - lfo modulating filter cutoff', t => {
 })
 
 test('functional song - using create() for stateful song', t => {
-  const thrum = require('../../index').meter(4, '4n')
-  const song = thrum.create()
+  const song = create()
   
   // First tick at spp 0
   let result = song.tick([
