@@ -1,44 +1,22 @@
 const R = require('ramda')
 const lengths = require('../lib/lengths')
 
-module.exports = R.curryN(5, play)
+// Export a smart wrapper that handles both 4 and 5 argument cases
+module.exports = function(...args) {
+  // If first arg looks like options object (not a note/function/array/chord)
+  if (args.length >= 2 && typeof args[0] === 'object' && !Array.isArray(args[0]) && 
+      (!args[0].octave || typeof args[0].octave !== 'function')) {
+    return R.curryN(5, play)(...args)
+  }
+  // Otherwise, shift args and add empty options
+  return R.curryN(4, (notes, count, length, state) => {
+    return play({}, notes, count, length, state)
+  })(...args)
+}
 
 function play(options, notes, count, length, state) {
-  // Detect if we're being called with (note, count, length, state) - options omitted
-  // This happens when play is partially applied like: play('C4') then called with (count, length, state)
-  if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
-    state = length
-    length = count
-    count = notes
-    notes = options
-    options = {}
-  }
-  // Detect if we're being called with (function, count, length, state) - options omitted
-  else if (typeof options === 'function' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
-    state = length
-    length = count
-    count = notes
-    notes = options
-    options = {}
-  }
-  // Detect if we're being called with (array, count, length, state) - options omitted
-  else if (Array.isArray(options) && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
-    state = length
-    length = count
-    count = notes
-    notes = options
-    options = {}
-  }
-  // Detect if we're being called with (chord object, count, length, state) - options omitted
-  else if (typeof options === 'object' && options.octave && typeof options.octave === 'function' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
-    state = length
-    length = count
-    count = notes
-    notes = options
-    options = {}
-  }
-  
   let _msg = { to: 'toMidi' }
+  
   if (typeof notes === 'object' && notes.octave && typeof notes.octave === 'function') {
     notes = notes.octave(4)
     let i = count % notes.length
