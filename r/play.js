@@ -4,24 +4,38 @@ const lengths = require('../lib/lengths')
 module.exports = R.curryN(5, play)
 
 function play(options, notes, count, length, state) {
-  // Handle different calling patterns
-  if (!state) {
-    // Called as play(note, count, length, state) - options omitted
-    if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
-      state = length
-      length = count
-      count = notes
-      notes = options
-      options = {}
-    } else {
-      // Called as play({}, note, count, length) - missing state
-      // This shouldn't happen with curryN(5), but keep for safety
-      state = length
-      length = count
-      count = notes
-      notes = options
-      options = {}
-    }
+  // Detect if we're being called with (note, count, length, state) - options omitted
+  // This happens when play is partially applied like: play('C4') then called with (count, length, state)
+  if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+    state = length
+    length = count
+    count = notes
+    notes = options
+    options = {}
+  }
+  // Detect if we're being called with (function, count, length, state) - options omitted
+  else if (typeof options === 'function' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+    state = length
+    length = count
+    count = notes
+    notes = options
+    options = {}
+  }
+  // Detect if we're being called with (array, count, length, state) - options omitted
+  else if (Array.isArray(options) && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+    state = length
+    length = count
+    count = notes
+    notes = options
+    options = {}
+  }
+  // Detect if we're being called with (chord object, count, length, state) - options omitted
+  else if (typeof options === 'object' && options.octave && typeof options.octave === 'function' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+    state = length
+    length = count
+    count = notes
+    notes = options
+    options = {}
   }
   
   let _msg = { to: 'toMidi' }
