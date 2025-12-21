@@ -97,6 +97,9 @@ function midi () {
   let broadcasting = false
 
   input.connect(msg => {
+    // Log ALL incoming MIDI messages for debugging
+    console.log('MIDI', `Raw message received: [${msg.map(b => '0x' + b.toString(16).toUpperCase()).join(', ')}]`)
+    
     // send the msg to all outputs
     Object.keys(outputs).forEach(key => {
       if (outputs[key]) outputs[key].send(msg)
