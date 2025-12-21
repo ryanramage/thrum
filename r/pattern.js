@@ -35,6 +35,10 @@ function compileArray (patternArr, noteLength) {
  * and return an Array as ['x', 'x', 'x', ['x', 'x', ['x', 'x']]]
  */
 function expandStr (str) {
+  // Handle case where str is not a string (e.g., already an array)
+  if (typeof str !== 'string') {
+    return str
+  }
   str = JSON.stringify(str.split(''))
   str = str.replace(/,"\[",/g, ', [')
   str = str.replace(/"\[",/g, '[')

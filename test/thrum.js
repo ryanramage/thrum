@@ -1,5 +1,5 @@
 const test = require('tape')
-const { tick } = require('thrum')
+const { tick } = require('../index.js')
 
 test('thrum connect', t => {
   let ok = tick([], {skipConnect: true})
