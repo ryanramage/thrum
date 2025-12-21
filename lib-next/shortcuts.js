@@ -144,7 +144,7 @@ function dnb(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
   const tracks = [
-    kick({ pattern: 'x-------x-------', ...options, drumMap }),
+    kick({  pattern: 'x-------x-------', ...options, drumMap }),
     snare({ pattern: '----x-------x---', velocity: 110, ...options, drumMap }),
     closedHat({ pattern: 'xxxxxxxxxxxxxxxx', velocity: 60, ...options, drumMap })
   ]
