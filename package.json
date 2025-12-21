@@ -7,7 +7,9 @@
     "thrum": "./livecoding.js"
   },
   "scripts": {
-    "test": "find test -name '*.js' -exec node {} \\;"
+    "test": "find test -name '*.js' -exec node {} \\;",
+    "test-next": "tape test-next/**/*.js",
+    "watch-next": "nodemon --watch lib-next --watch test-next --exec npm run test-next"
   },
   "repository": {
     "type": "git",
@@ -29,6 +31,7 @@
   "homepage": "https://github.com/ryanramage/thrum#readme",
   "dependencies": {
     "@tonaljs/tonal": "^4.6.0",
+    "chokidar": "^3.5.3",
     "immutable": "^4.0.0-rc.12",
     "jzz": "^1.0.2",
     "nodemon": "^2.0.7",
