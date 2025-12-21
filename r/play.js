@@ -3,11 +3,17 @@ const lengths = require('../lib/lengths')
 
 // Export a smart wrapper that handles both 4 and 5 argument cases
 module.exports = function(...args) {
+  // If we have all 5 arguments, call play directly
+  if (args.length === 5) {
+    return play(...args)
+  }
+  
   // If first arg looks like options object (not a note/function/array/chord)
   if (args.length >= 2 && typeof args[0] === 'object' && !Array.isArray(args[0]) && 
       (!args[0].octave || typeof args[0].octave !== 'function')) {
     return R.curryN(5, play)(...args)
   }
+  
   // Otherwise, shift args and add empty options
   return R.curryN(4, (notes, count, length, state) => {
     return play({}, notes, count, length, state)
