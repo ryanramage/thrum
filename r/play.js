@@ -76,8 +76,10 @@ module.exports = function play(arg1, arg2, arg3, arg4, arg5) {
   }
   
   // Smart defaults
-  _msg.length = options.length || length || 96
-  _msg.velocity = options.velocity || 100
+  // If options.length is set, use it. Otherwise use 96 (quarter note) as default.
+  // Don't use the 'length' parameter as default because it's the repeat period, not note length.
+  _msg.length = options.length !== undefined ? options.length : 96
+  _msg.velocity = options.velocity !== undefined ? options.velocity : 100
 
   if (options.channel) _msg.channel = options.channel
 
