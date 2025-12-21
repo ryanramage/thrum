@@ -7,6 +7,140 @@ test('kick returns a track function', t => {
   t.end()
 })
 
+test('pattern compilation handles different lengths correctly', t => {
+  const { pattern } = require('../lib-next/pattern')
+  
+  // Test 8-character pattern (should use 6 ticks per char for 16th notes)
+  const eightChar = pattern('x-x-x-x-')
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = eightChar.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, '8-char pattern fires on first position')
+  
+  // Test 16-character pattern (should use 6 ticks per char)
+  const sixteenChar = pattern('x---------------')
+  state = { bar: 0, beat: 0, tick: 0 }
+  result = sixteenChar.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, '16-char pattern fires on first position')
+  
+  // Test 4-character pattern (should use 24 ticks per char)
+  const fourChar = pattern('x---')
+  state = { bar: 0, beat: 0, tick: 0 }
+  result = fourChar.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, '4-char pattern fires on first position')
+  
+  t.end()
+})
+
+test('16th note pattern timing is correct', t => {
+  const { pattern } = require('../lib-next/pattern')
+  
+  // 16-char pattern: each char = 6 ticks
+  const p = pattern('x-x-x-x-x-x-x-x-')
+  
+  // Should fire at ticks 0, 12, 24, 36, etc.
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at tick 0')
+  
+  state = { bar: 0, beat: 0, tick: 6 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 0, 'does not fire at tick 6')
+  
+  state = { bar: 0, beat: 0, tick: 12 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at tick 12')
+  
+  state = { bar: 0, beat: 1, tick: 0 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at beat 1, tick 0 (position 24)')
+  
+  t.end()
+})
+
+test('beat pattern timing is correct', t => {
+  const { pattern } = require('../lib-next/pattern')
+  
+  // 4-char pattern: each char = 24 ticks
+  const p = pattern('x-x-')
+  
+  // Should fire at ticks 0, 48 (beat 2)
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at beat 0')
+  
+  state = { bar: 0, beat: 1, tick: 0 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 0, 'does not fire at beat 1')
+  
+  state = { bar: 0, beat: 2, tick: 0 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at beat 2')
+  
+  t.end()
+})
+
+test('pattern wraps correctly across bars', t => {
+  const { pattern } = require('../lib-next/pattern')
+  
+  // 4-char pattern should repeat every 4 beats
+  const p = pattern('x---')
+  
+  // Test first bar
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at bar 0, beat 0')
+  
+  // Test second bar - should repeat pattern
+  state = { bar: 1, beat: 0, tick: 0 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 1, 'fires at bar 1, beat 0 (pattern repeats)')
+  
+  state = { bar: 1, beat: 1, tick: 0 }
+  result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 0, 'does not fire at bar 1, beat 1')
+  
+  t.end()
+})
+
+test('closedHat pattern timing', t => {
+  const { closedHat } = require('../lib-next/shortcuts')
+  
+  const h = closedHat()
+  
+  // Default pattern is 'x-x-x-x-x-x-x-x-' (16 chars, 6 ticks each)
+  // Should fire at positions 0, 12, 24, 36, 48, 60, 72, 84
+  
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = h(state)
+  t.equal(result.actions.length, 1, 'hihat fires at tick 0')
+  
+  state = { bar: 0, beat: 0, tick: 12 }
+  result = h(state)
+  t.equal(result.actions.length, 1, 'hihat fires at tick 12')
+  
+  state = { bar: 0, beat: 1, tick: 0 }
+  result = h(state)
+  t.equal(result.actions.length, 1, 'hihat fires at beat 1, tick 0')
+  
+  state = { bar: 0, beat: 0, tick: 6 }
+  result = h(state)
+  t.equal(result.actions.length, 0, 'hihat does not fire at tick 6')
+  
+  t.end()
+})
+
+test('empty pattern handling', t => {
+  const { pattern } = require('../lib-next/pattern')
+  
+  const p = pattern('----')
+  
+  let state = { bar: 0, beat: 0, tick: 0 }
+  let result = p.play(() => ({ type: 'test' }))(state)
+  t.equal(result.actions.length, 0, 'empty pattern produces no actions')
+  
+  t.end()
+})
+
 test('kick executes and returns actions on beat', t => {
   const k = kick()
   const state = { bar: 0, beat: 0, tick: 0 }
