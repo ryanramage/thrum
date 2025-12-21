@@ -7,7 +7,7 @@
     "thrum": "./livecoding.js"
   },
   "scripts": {
-    "test": "node test/*.js && node test/**/*.js"
+    "test": "find test -name '*.js' -exec node {} \\;"
   },
   "repository": {
     "type": "git",
