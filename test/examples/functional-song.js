@@ -117,8 +117,11 @@ test('functional song - arpeggio with repeat', t => {
   let tick = exp => result = _tick(exp, SongState.set({spp: 0, userState: {}, actions: []}))
 
   // Arpeggiated chord using repeat and a note function
-  const cmChord = chord('CM').octave(4)
-  const arpeggio = i => cmChord.chord.notes[i % cmChord.chord.notes.length] + '4'
+  const cmChord = chord('CM')
+  const arpeggio = i => {
+    const notes = cmChord.chord.notes
+    return notes[i % notes.length] + '4'
+  }
   
   tick([
     repeat('16n', play(arpeggio))
