@@ -7,7 +7,25 @@ const config = require('rc')('thrum', {
 function usage() {
   console.log('Usage: node midi-dump.js')
   console.log('Available midi ports:')
-  console.log(JZZ().info().inputs.map(i => i.name))
+  
+  try {
+    console.log('DEBUG: Initializing MIDI engine...')
+    JZZ().or('Cannot start MIDI engine!')
+    console.log('DEBUG: MIDI engine initialized successfully')
+    
+    const midiInfo = JZZ().info()
+    console.log('DEBUG: MIDI info object:', midiInfo)
+    console.log('DEBUG: Raw inputs array:', midiInfo.inputs)
+    
+    if (midiInfo.inputs && midiInfo.inputs.length > 0) {
+      console.log('DEBUG: Found', midiInfo.inputs.length, 'inputs')
+      console.log(midiInfo.inputs.map(i => i.name))
+    } else {
+      console.log('DEBUG: No MIDI inputs found or inputs array is empty')
+    }
+  } catch (error) {
+    console.log('DEBUG: Error during MIDI initialization:', error)
+  }
 }
 
 function midiDump() {
