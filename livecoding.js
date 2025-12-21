@@ -79,7 +79,7 @@ function midi () {
   if (!selectedInput) selectedInput = Object.values(config.inputs)[0]
   if (!selectedInput) {
     let inputs = JZZ().info().inputs
-    if (inputs || inputs.length) selectedInput = inputs[0].name
+    if (inputs && inputs.length) selectedInput = inputs[0].name
   }
 
   JZZ().or('Cannot start MIDI engine!')

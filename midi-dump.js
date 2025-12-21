@@ -24,6 +24,7 @@ function midiDump() {
     return
   }
 
+  console.log('MIDI', 'Attempting to connect to input:', selectedInput)
   JZZ().or('Cannot start MIDI engine!')
   const input = JZZ().openMidiIn(selectedInput)
 
