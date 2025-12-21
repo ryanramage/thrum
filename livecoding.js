@@ -16,7 +16,7 @@ function usage() {
 }
 if (!config._[0]) return usage()
 
-let output = null
+let outputs = {}
 midi()
 watch()
 
@@ -41,12 +41,17 @@ function watch () {
   nodemon.on('start', function () {
     console.log('App has started');
   }).on('quit', function () {
-    if (output) {
-      for (let i=0; i<16; i++) {
-        output.allNotesOff(i)
+    // Clean up all MIDI outputs
+    Object.keys(outputs).forEach(key => {
+      let output = outputs[key]
+      if (output) {
+        for (let i=0; i<16; i++) {
+          output.send([0xB0 + i, 123, 0]) // All Notes Off
+          output.send([0xB0 + i, 120, 0]) // All Sound Off
+        }
+        output.close()
       }
-      output.close()
-    }
+    })
     console.log('App has quit');
     process.exit();
   }).on('restart', function (files) {
@@ -60,13 +65,13 @@ function midi () {
       Object.keys(config.outputs).forEach(out => {
         let name = config.outputs[out]
         console.log('connecting to livecoding output to', name)
-        output = JZZ().openMidiOut(name)
+        outputs[out] = JZZ().openMidiOut(name)
       })
     } else {
       // just connect to a single output
       let name = config.out
       console.log('connecting to livecoding output to', name)
-      output = JZZ().openMidiOut(name)
+      outputs['default'] = JZZ().openMidiOut(name)
     }
   }
 
@@ -86,7 +91,11 @@ function midi () {
   let broadcasting = false
 
   input.connect(msg => {
-    if (output) output.send(msg) // send the msg to the out
+    // send the msg to all outputs
+    Object.keys(outputs).forEach(key => {
+      if (outputs[key]) outputs[key].send(msg)
+    })
+    
     switch (msg[0]) {
       // Clock
       case 0xF2:
@@ -115,7 +124,9 @@ function midi () {
     console.log('got a request', spp)
     let songPosition = Math.floor(spp / 6)
     broadcasting = true
-    if (output) output.send(JZZ.MIDI.songPosition(songPosition))
+    Object.keys(outputs).forEach(key => {
+      if (outputs[key]) outputs[key].send(JZZ.MIDI.songPosition(songPosition))
+    })
     resp.end('ok')
   })
   server.listen(config.port, err => {

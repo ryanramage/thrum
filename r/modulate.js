@@ -5,12 +5,15 @@ const Tonal = require('@tonaljs/tonal')
 module.exports = R.curryN(5, modulate)
 
 function modulate(subdivision, actionsFilter, transformations, emitter, state) {
+  // First, let the emitter add actions to state
   emitter(state)
-  // transpose all the notes
+  
+  // Then transform the actions that match the filter
   state.actions = state.actions.map(a => {
-    if (!actionFilter(a)) return a
-    le
-    let a_ = R.evolve(transformations)
+    if (!actionsFilter(a)) return a
+    // Apply transformations using Ramda's evolve
+    return R.evolve(transformations, a)
   })
+  
   return state
 }
