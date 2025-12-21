@@ -31,13 +31,17 @@ function pattern(str) {
 
 function compile(str) {
   const chars = str.split('')
-  const ticksPerChar = 24 // Each char is a full beat (24 ticks)
+  
+  // Auto-detect pattern resolution based on length
+  // 16 chars = 16th note resolution (6 ticks per char)
+  // 4 chars or other = beat resolution (24 ticks per char)
+  const ticksPerChar = chars.length === 16 ? 6 : 24
   const length = chars.length * ticksPerChar
   const hits = {}
   
   chars.forEach((char, i) => {
     if (char === 'x') {
-      // Mark the first tick of this beat as a hit
+      // Mark the first tick of this subdivision as a hit
       const startTick = i * ticksPerChar
       hits[startTick] = true
     }
