@@ -17,15 +17,16 @@ const DEFAULT_DRUM_MAP = {
   tom3: 'C2'
 }
 
-// Create a drum shortcut function
+// Create a drum shortcut function that returns a track function
 function createDrumShortcut(defaultPattern, defaultNote, drumMap = DEFAULT_DRUM_MAP) {
   return (options = {}) => {
     const patternStr = options.pattern || defaultPattern
     const noteValue = options.note || defaultNote
-    const velocity = options.velocity || 100
-    const length = options.length || 24
-    const channel = options.channel || 9 // MIDI channel 10 (0-indexed as 9)
+    const velocity = options.velocity !== undefined ? options.velocity : 100
+    const length = options.length !== undefined ? options.length : 24
+    const channel = options.channel !== undefined ? options.channel : 9 // MIDI channel 10 (0-indexed as 9)
     
+    // Return a track function
     return pattern(patternStr).play((state) => 
       note(noteValue, { velocity, length, channel })(state)
     )
@@ -68,83 +69,113 @@ function ride(options = {}) {
   return createDrumShortcut('x-x-x-x-x-x-x-x-', drumMap.ride, drumMap)(options)
 }
 
-// Genre-specific pattern collections
+function rimshot(options = {}) {
+  const drumMap = options.drumMap || DEFAULT_DRUM_MAP
+  return createDrumShortcut('--x---x---x---x-', drumMap.rimshot, drumMap)(options)
+}
+
+// Helper to combine multiple track functions into one
+function combineTracks(tracks) {
+  return (state) => {
+    const allActions = []
+    
+    tracks.forEach(track => {
+      const result = track(state)
+      if (result && result.actions) {
+        allActions.push(...result.actions)
+      }
+    })
+    
+    return { actions: allActions }
+  }
+}
+
+// Genre-specific pattern collections - return a single combined track function
 function fourOnFloor(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ ...options, drumMap }),
     snare({ ...options, drumMap }),
     closedHat({ ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function house(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x---x---x---x---', ...options, drumMap }),
     snare({ pattern: '----x-------x---', ...options, drumMap }),
     closedHat({ pattern: 'x-x-x-x-x-x-x-x-', ...options, drumMap }),
     openHat({ pattern: '--x---x---x---x-', ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function techno(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x---x---x---x---', ...options, drumMap }),
     snare({ pattern: '----x-------x---', velocity: 90, ...options, drumMap }),
     closedHat({ pattern: 'xxxxxxxxxxxxxxxx', velocity: 80, ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function breakbeat(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x-----x-x-------', ...options, drumMap }),
     snare({ pattern: '----x-------x---', ...options, drumMap }),
     closedHat({ pattern: 'x-x-x-x-x-x-x-x-', velocity: 70, ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function dnb(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x-------x-------', ...options, drumMap }),
     snare({ pattern: '----x-------x---', velocity: 110, ...options, drumMap }),
     closedHat({ pattern: 'xxxxxxxxxxxxxxxx', velocity: 60, ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function trap(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x---x---x-x-----', ...options, drumMap }),
     snare({ pattern: '----x-------x---', ...options, drumMap }),
     closedHat({ pattern: 'x-x-x-x-x-x-x-x-', velocity: 70, ...options, drumMap }),
     openHat({ pattern: '--x---x---x---x-', velocity: 90, ...options, drumMap })
   ]
+  
+  return combineTracks(tracks)
 }
 
 function reggaeton(options = {}) {
   const drumMap = options.drumMap || DEFAULT_DRUM_MAP
   
-  return [
+  const tracks = [
     kick({ pattern: 'x---x---x---x---', ...options, drumMap }),
     snare({ pattern: '------x-------x-', ...options, drumMap }),
     rimshot({ pattern: '--x-------x-----', velocity: 80, ...options, drumMap }),
     closedHat({ pattern: 'x-x-x-x-x-x-x-x-', velocity: 60, ...options, drumMap })
   ]
-}
-
-function rimshot(options = {}) {
-  const drumMap = options.drumMap || DEFAULT_DRUM_MAP
-  return createDrumShortcut('--x---x---x---x-', drumMap.rimshot, drumMap)(options)
+  
+  return combineTracks(tracks)
 }
 
 // Utility to create custom drum maps
@@ -174,5 +205,6 @@ module.exports = {
   
   // Utilities
   createDrumMap,
-  DEFAULT_DRUM_MAP
+  DEFAULT_DRUM_MAP,
+  combineTracks
 }

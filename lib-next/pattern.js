@@ -11,8 +11,15 @@ function pattern(str) {
         const patternPos = position % compiled.length
         
         if (compiled.hits[patternPos]) {
-          const action = midiFunc(state)
-          if (action) actions.push(action)
+          const result = midiFunc(state)
+          if (result) {
+            // Handle both single actions and arrays
+            if (Array.isArray(result)) {
+              actions.push(...result)
+            } else {
+              actions.push(result)
+            }
+          }
         }
         
         return { actions }
