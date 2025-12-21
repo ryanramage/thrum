@@ -7,7 +7,7 @@
     "thrum": "./livecoding.js"
   },
   "scripts": {
-    "test": "tap test/*.js test/**/*.js"
+    "test": "node test/*.js && node test/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -37,7 +37,6 @@
     "rc": "^1.2.8"
   },
   "devDependencies": {
-    "tap": "^14.11.0",
     "tape": "^4.13.0"
   }
 }
