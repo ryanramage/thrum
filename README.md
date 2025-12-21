@@ -1,56 +1,353 @@
-Priority Order (if implementing incrementally):
+# Thrum
 
- 1 #5 (Defaults/Shortcuts) - ✅ Done
- 2 #2 (DSL order) - ✅ Done - API now reads naturally: `pattern('x---').play('C4')`
- 3 #4 (State management) - ✅ Done - Immutable State class with helper methods
- 4 #3 (Track abstraction) - ✅ Done - Named tracks, groups, and arrangements
- 5 #1 (Unify API) - Biggest change, but cleanest result
+A modern, functional music sequencer for live coding and algorithmic composition.
 
-thrum
-=====
+Thrum provides a clean, composable API for creating MIDI sequences using patterns, tracks, and arrangements. Built with functional programming principles, it's designed for both live performance and studio production.
 
-Thrum is an experiment in making a livecoding music sequencer using functional reducers.
+## Features
 
-Tools like redux and flux have made a big impact with frontend developers, and as such I am attempting to take
-that hammer and nail some midi control with thrum.
+- **Pattern-based sequencing** - Create rhythms with simple string notation
+- **Named tracks** - Organize your music with labeled tracks and groups
+- **Arrangements** - Structure songs with intro, verse, chorus sections
+- **Immutable state** - Predictable, testable music generation
+- **Simulator** - Test and visualize patterns without MIDI hardware
+- **Live coding friendly** - Hot reload your music as you code
 
-Thrum quickstart
-=================
+## Installation
 
-Here is a way to get using thrum quickly. IT IS PRETTY HARDCODED TO A MACOS. I will try and make this part easier in the future.
-
-Make sure you have an midi bus
--------------------------------
-
-You need to have your midi bus, and it is labeled 'IAC Driver Bus 1'. This is super common setup. See
-
- - https://discussions.apple.com/thread/8096575
-
-
-Install thrum
-----------------
-
-Install thrum as a global.
-
-    npm i -g thrum
-
-
-Create a project directory
----------------------------
-
+```bash
+npm install thrum
 ```
-mkdir test-thrum
-cd test-thrum
+
+Or install globally for the CLI:
+
+```bash
+npm install -g thrum
+```
+
+## Quick Start
+
+### Basic Pattern
+
+Create a simple kick drum pattern:
+
+```javascript
+const { pattern, midi, song, simulator } = require('thrum/lib-next')
+
+// Create a pattern that plays on beats 1 and 3
+const kick = pattern.pattern('x---x---').play(
+  midi.note('C2', { channel: 9 })
+)
+
+// Create a song with the pattern
+const mySong = song.create([kick], { tempo: 120 })
+
+// Simulate it (no MIDI hardware needed)
+const sim = simulator.create(mySong)
+const results = sim.run(4) // Run for 4 bars
+
+console.log(`Generated ${results.length} events`)
+console.log(sim.visualize(4)) // ASCII visualization
+```
+
+### Multiple Tracks
+
+Build a drum beat with multiple patterns:
+
+```javascript
+const { pattern, midi, song, simulator } = require('thrum/lib-next')
+
+// Kick on 1 and 3
+const kick = pattern.pattern('x---x---').play(
+  midi.note('C2', { channel: 9 })
+)
+
+// Snare on 2 and 4
+const snare = pattern.pattern('----x-------x---').play(
+  midi.note('D2', { channel: 9 })
+)
+
+// Hi-hat on every 8th note
+const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(
+  midi.note('F#2', { channel: 9, velocity: 80 })
+)
+
+const mySong = song.create([kick, snare, hihat], { tempo: 120 })
+const sim = simulator.create(mySong)
+
+console.log(sim.visualize(4))
+```
+
+## Core Concepts
+
+### Patterns
+
+Patterns define when notes play using a simple string notation:
+
+- `x` = play a note
+- `-` = rest (silence)
+
+```javascript
+const { pattern, midi } = require('thrum/lib-next')
+
+// Quarter notes on beats 1 and 3
+pattern.pattern('x---x---').play(midi.note('C4'))
+
+// 16th note hi-hats
+pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2'))
+
+// Euclidean rhythm: 3 hits distributed over 8 steps
+pattern.euclidean(3, 8).play(midi.note('C4'))
+```
+
+**Pattern Resolution:**
+- 4 characters = quarter note resolution (24 ticks per character)
+- 16 characters = 16th note resolution (6 ticks per character)
+
+### MIDI Functions
+
+MIDI functions define what happens when a pattern triggers:
+
+```javascript
+const { midi } = require('thrum/lib-next')
+
+// Single note
+midi.note('C4')
+midi.note('C4', { velocity: 80, length: 12, channel: 0 })
+
+// Chord (multiple notes at once)
+midi.chord(['C4', 'E4', 'G4'])
+midi.chord(['C4', 'E4', 'G4'], { spread: 3 }) // Strum with 3 tick delay
+
+// Control Change
+midi.cc(16, 64) // Controller 16, value 64
+midi.cc(16, 64, { channel: 1 })
+```
+
+### Named Tracks
+
+Organize your music with named tracks:
+
+```javascript
+const { track, pattern, midi } = require('thrum/lib-next')
+
+const kick = track('kick',
+  pattern.pattern('x---x---').play(midi.note('C2'))
+)
+
+const snare = track('snare',
+  pattern.pattern('----x---').play(midi.note('D2'))
+)
+
+// Mute/unmute tracks
+kick.mute()
+kick.unmute()
+kick.toggleMute()
+
+// Override MIDI channel
+kick.setChannel(9)
+```
+
+### Track Groups
+
+Group related tracks together:
+
+```javascript
+const { track, group, pattern, midi } = require('thrum/lib-next')
+
+const kick = track('kick', pattern.pattern('x---').play(midi.note('C2')))
+const snare = track('snare', pattern.pattern('----x---').play(midi.note('D2')))
+const hihat = track('hihat', pattern.pattern('x-x-x-x-').play(midi.note('F#2')))
+
+const drums = group('drums', [kick, snare, hihat])
+
+// Control the entire group
+drums.mute()
+drums.unmute()
+
+// Control individual tracks
+drums.muteTrack('hihat')
+drums.soloTrack('kick')
+drums.unsoloAll()
+```
+
+### Arrangements
+
+Structure your song with sections:
+
+```javascript
+const { arrangement, track, pattern, midi } = require('thrum/lib-next')
+
+// Define tracks for each section
+const introKick = track('intro-kick',
+  pattern.pattern('x-------').play(midi.note('C2'))
+)
+
+const verseKick = track('verse-kick',
+  pattern.pattern('x---x---').play(midi.note('C2'))
+)
+
+const verseBass = track('verse-bass',
+  pattern.pattern('x-x-x-x-').play(midi.note('C1'))
+)
+
+const chorusDrums = group('chorus-drums', [
+  track('chorus-kick', pattern.pattern('x---x---x---x---').play(midi.note('C2'))),
+  track('chorus-snare', pattern.pattern('----x-------x---').play(midi.note('D2'))),
+  track('chorus-hihat', pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2')))
+])
+
+// Create the arrangement
+const mySong = arrangement([
+  [2, 'intro', [introKick]],
+  [4, 'verse', [verseKick, verseBass]],
+  [4, 'chorus', chorusDrums],
+  [2, 'outro', [introKick]]
+])
+
+// Section info is available in state
+const dynamicTrack = (state) => {
+  console.log(state.get('section'))      // 'verse', 'chorus', etc.
+  console.log(state.get('sectionBar'))   // Bar within current section
+  console.log(state.get('absoluteBar'))  // Absolute bar number
+  return { actions: [] }
+}
+```
+
+### State Management
+
+Thrum uses an immutable State object with helpful methods:
+
+```javascript
+const { State } = require('thrum/lib-next/state')
+
+// Create state
+const state = State.from(0, 0, 0) // bar 0, beat 0, tick 0
+const state2 = State.fromTick(96) // from absolute tick number
+
+// Query state
+state.isFirstBeatOfBar()  // true if bar start
+state.isBeat(2)           // true if on beat 2
+state.isBar(0)            // true if on bar 0
+state.positionInBar()     // 0-95 for 4/4 time
+state.position()          // "1.1.0" (human readable)
+
+// User state for counters, flags, etc.
+const state3 = state.withUserState({ counter: 5, mode: 'verse' })
+state3.get('counter')     // 5
+state3.get('missing', 0)  // 0 (default value)
+
+// State is immutable
+state.bar = 5  // throws error
+```
+
+Use state in custom tracks:
+
+```javascript
+const customTrack = (state) => {
+  // Play different notes based on bar number
+  if (state.bar % 4 === 0) {
+    return { actions: [midi.note('C4')(state)] }
+  } else {
+    return { actions: [midi.note('E4')(state)] }
+  }
+}
+
+// Or use state helpers
+const onDownbeat = (state) => {
+  if (state.isFirstBeatOfBar()) {
+    return { actions: [midi.note('C2')(state)] }
+  }
+  return { actions: [] }
+}
+```
+
+## Testing and Development
+
+### Simulator
+
+Test your music without MIDI hardware:
+
+```javascript
+const { simulator, song, pattern, midi } = require('thrum/lib-next')
+
+const kick = pattern.pattern('x---x---').play(midi.note('C2'))
+const mySong = song.create([kick], { tempo: 120 })
+
+const sim = simulator.create(mySong)
+
+// Run for N bars
+const results = sim.run(4)
+console.log(`Generated ${results.length} events`)
+
+// Get detailed timeline
+const timeline = sim.timeline(4)
+console.log(`Duration: ${timeline.metadata.durationSeconds}s`)
+console.log(`Tempo: ${timeline.metadata.tempo} BPM`)
+
+// Visualize the pattern
+console.log(sim.visualize(4))
+// Output:
+// Tempo: 120 BPM | Meter: 4/4 | Bars: 4
+// ────────────────────────────────────────────────────────────────────────────────
+// Bar 1: |x      ·      ·      · |·      ·      ·      · |x      ·      ·      · |·      ·      ·      · |
+// Bar 2: |x      ·      ·      · |·      ·      ·      · |x      ·      ·      · |·      ·      ·      · |
+// ...
+
+// Test a single tick
+const result = sim.tick(0)
+console.log(result.state)   // { bar: 0, beat: 0, tick: 0 }
+console.log(result.actions) // Array of MIDI actions
+```
+
+### Writing Tests
+
+Use the simulator in your tests:
+
+```javascript
+const test = require('tape')
+const { simulator, song, pattern, midi } = require('thrum/lib-next')
+
+test('kick pattern plays on beats 1 and 3', t => {
+  const kick = pattern.pattern('x---x---').play(midi.note('C2'))
+  const mySong = song.create([kick])
+  const sim = simulator.create(mySong)
+  
+  const results = sim.run(1)
+  
+  t.equal(results.length, 2, 'two kicks per bar')
+  t.equal(results[0].state.beat, 0, 'first kick on beat 1')
+  t.equal(results[1].state.beat, 2, 'second kick on beat 3')
+  
+  t.end()
+})
+```
+
+## Live Coding Setup
+
+### macOS Setup
+
+1. **Create IAC MIDI Bus:**
+   - Open Audio MIDI Setup
+   - Window → Show MIDI Studio
+   - Double-click "IAC Driver"
+   - Check "Device is online"
+   - Create a bus named "IAC Driver Bus 1"
+
+2. **Create Project:**
+
+```bash
+mkdir my-thrum-project
+cd my-thrum-project
+npm init -y
+npm install thrum
 touch .thrumrc
 touch music.js
 ```
 
-Edit your .thrumrc file
---------------------------
+3. **Configure `.thrumrc`:**
 
-This is the configuration for your project. Its mostly to map midi config. Mine looks like this:
-
-```
+```json
 {
   "livecoding": true,
   "inputs": {
@@ -62,267 +359,276 @@ This is the configuration for your project. Its mostly to map midi config. Mine 
 }
 ```
 
+4. **Create `music.js`:**
 
-Edit your music.js file
-------------------------------
-
-This file is where you generate sequence midi code. Make one like this
-
-```
+```javascript
 const { tick, clip } = require('thrum')
 
 tick([
-  clip('-x-x-[xx]-x-x-[xx]-x-[xxx]', ['C4']),
-  clip('[xxx]xx[xxx]', ['C5', 'C5', 'C5', 'E5', 'C6', 'F5'], {channel: 12}),
-  clip('--x---x---xx', ['b3'], {channel: 6}),
-  clip('xxxx', ['C2'])
+  clip('x---x---x---x---', ['C2']),
+  clip('----x-------x---', ['D2']),
+  clip('x-x-x-x-x-x-x-x-', ['F#2'])
 ])
-
 ```
 
+5. **Start Thrum:**
 
-Start the thrum process on the command line
----------------------------------------------------------
-
-    thrum music.js
-
-Now each save will hot reload your music
-
-Open a synth
--------------------------------------------------
-
-vist https://ryanramage.github.io/Enfer/
-
-this is an in browser midi synth/sampler. You may have to accept permissions for the page to do midi. Once it loads
-you can test that it plays samples with hitting keys like 'z', 'x', 'c'. 'v'
-
-
-The main thing thrum needs is a clock. pressing 'Space' in Enfer will trigger a clock to start and stop. This will
-run the sequencer in your thum file. experiment and have fun
-
-
-Going further
-==============
-
-Here are some examples of song structures using thrum.
-
-
-
-Large example
-
-```
-const { setup, connect, bars, toMidi, onBeat } = require('thrum')
-const config = setup({
-  inputs: { 1: 'IAC Driver IAC Bus 2' },
-  outputs: { 1: 'IAC Driver Bus 1' }
-})
-const initialState = {}
-const dispatchers = { toMidi }
-connect(config, initialState, dispatchers, tick)
-
-function tick (input) {
-  return bars(input, [4, '4n'], [
-    [1, intro],
-    [4, firstVerse],
-    [4, chorus],
-    [4, secondVerse],
-    [4, chorus],
-    [2, outro]
-  ])
-}
-
-function intro ({state, spp}) {
-  let actions = []
-  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'C4', channel: 0}])
-  if (onBeat(spp, '4n')) actions.push(['toMidi', {note: 'E5', channel: 1}])
-  return {state, actions}
-}
-
-function firstVerse ({state, spp}) {
-  let actions = []
-  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'D4', channel: 0}])
-  if (onBeat(spp, '4n')) actions.push(['toMidi', {note: 'F5', channel: 1}])
-  return {state, actions}
-}
-function secondVerse ({state, spp}) {
-  let actions = []
-  if (onBeat(spp, '1n')) actions.push(['toMidi', {note: 'E4', channel: 0}])
-  if (onBeat(spp, '4n')) actions.push(['toMidi', {note: 'G5', channel: 1}])
-  return {state, actions}
-}
-function chorus ({state, spp}) {
-  let actions = []
-  if (onBeat(spp, '8n')) actions.push(['toMidi', {note: 'A2', channel: 1}])
-  return {state, actions}
-}
-function outro ({state, spp}) {  let actions = []
-  if (onBeat(spp, '8n')) actions.push(['toMidi', {note: 'B2', channel: 1}])
-  return {state, actions}
-}
-
+```bash
+thrum music.js
 ```
 
-And this is what the above sounds like:
+Now edit `music.js` and save - your changes will hot reload!
 
-[![Watch the video](https://raw.githubusercontent.com/ryanramage/thrum/master/preview.png)](https://youtu.be/6WRXGUzItO0)
+6. **Connect a Synth:**
+   - Use a DAW (Reaper, Ableton, etc.) with MIDI input from "IAC Driver Bus 1"
+   - Or use a web synth like [Enfer](https://ryanramage.github.io/Enfer/)
 
+## Patterns and Best Practices
 
-For my current set of live examples, see https://github.com/ryanramage/thrum-examples
+### Pattern Design
 
-
-Smallest thrum file
-
-```
-const { tick, clip } = require('thrum')
-tick([])
-```
-
-Daw
--------------------------------------------------
-
-I use reaper for my daw, and thrum works very well for it
-
-Thrum listens on the midi input defined in step 3 for midi clock events. Something has to generate those. Your DAW or master device will do the trick. In your daw, you will have to create instruments on tracks that will listen for midi events on each channel you want. This will play the midi notes that thrum generates.
-
-Testing and Development
--------------------------------------------------
-
-### Simulator
-
-Thrum includes a simulator that lets you test and develop songs without MIDI hardware. This is useful for:
-
-- Writing unit tests for your songs
-- Debugging timing and pattern issues
-- Visualizing patterns before playing them
-- Running in CI/CD environments
-
-Example usage with the new DSL order:
-
+**Start Simple:**
 ```javascript
-const simulator = require('thrum/lib-next/simulator')
-const song = require('thrum/lib-next/song')
-const pattern = require('thrum/lib-next/pattern')
-const midi = require('thrum/lib-next/midi')
-
-// Create a song using the natural DSL order
+// Basic kick and snare
 const kick = pattern.pattern('x---x---').play(midi.note('C2'))
-const snare = pattern.pattern('----x---').play(midi.note('D2'))
-const mySong = song.create([kick, snare], { tempo: 120 })
-
-// Create simulator
-const sim = simulator.create(mySong)
-
-// Run for 4 bars
-const results = sim.run(4)
-console.log(`Generated ${results.length} events`)
-
-// Get timeline with timing info
-const timeline = sim.timeline(4)
-console.log(`Duration: ${timeline.metadata.durationSeconds}s`)
-
-// Visualize the pattern
-console.log(sim.visualize(4))
+const snare = pattern.pattern('----x-------x---').play(midi.note('D2'))
 ```
 
-See `examples/simulator-demo.js` for a complete example.
-
-### New DSL Order (lib-next)
-
-The new API in `lib-next/` uses a more natural, chainable syntax:
-
+**Add Variation:**
 ```javascript
-// Old style (still works in lib/)
-pattern('x---', play('C4'))
+// Vary velocity for dynamics
+const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(
+  midi.note('F#2', { velocity: 80 })
+)
 
-// New style (lib-next/)
-pattern('x---').play(note('C4'))
+// Use euclidean rhythms for interesting patterns
+const perc = pattern.euclidean(5, 16).play(midi.note('G#2'))
 ```
 
-This makes the code read more naturally from left to right: "create a pattern, then play a note".
-
-### State Management (lib-next)
-
-The new State class provides immutable state with helpful methods:
-
+**Layer Patterns:**
 ```javascript
-const { State } = require('thrum/lib-next/state')
-
-// Create state
-const state = State.from(0, 0, 0) // bar 0, beat 0, tick 0
-const state2 = State.fromTick(96) // from absolute tick
-
-// Helper methods
-state.isFirstBeatOfBar()  // true if bar 0, beat 0, tick 0
-state.isBeat(2)           // true if on beat 2
-state.isBar(0)            // true if on bar 0
-state.positionInBar()     // 0-95 for 4/4 time
-state.position()          // "1.1.0" (human readable)
-
-// User state (for counters, etc.)
-const state3 = state.withUserState({ counter: 5 })
-state3.get('counter')     // 5
-state3.get('missing', 0)  // 0 (default value)
-
-// Immutable - properties cannot be changed
-state.bar = 5  // throws error
+// Combine multiple patterns on the same instrument
+const bassLine = group('bass', [
+  track('bass-root', pattern.pattern('x-------').play(midi.note('C1'))),
+  track('bass-fifth', pattern.pattern('----x---').play(midi.note('G1'))),
+  track('bass-octave', pattern.pattern('------x-').play(midi.note('C2')))
+])
 ```
 
-Tracks receive State objects automatically:
+### Track Organization
 
+**Use Named Tracks:**
 ```javascript
-const track = (state) => {
+// Good: Easy to identify and control
+const kick = track('kick', ...)
+const snare = track('snare', ...)
+
+// Not as good: Anonymous functions
+const track1 = (state) => { ... }
+const track2 = (state) => { ... }
+```
+
+**Group Related Tracks:**
+```javascript
+const drums = group('drums', [kick, snare, hihat])
+const bass = group('bass', [bassRoot, bassFifth])
+const melody = group('melody', [lead, pad])
+
+const mySong = song.create([drums, bass, melody])
+```
+
+**Use Arrangements for Structure:**
+```javascript
+// Clear song structure
+const mySong = arrangement([
+  [4, 'intro', introTracks],
+  [8, 'verse1', verseTracks],
+  [8, 'chorus', chorusTracks],
+  [8, 'verse2', verseTracks],
+  [8, 'chorus', chorusTracks],
+  [4, 'outro', outroTracks]
+])
+```
+
+### State Management
+
+**Use User State for Counters:**
+```javascript
+const evolving = (state) => {
+  // Get counter from state, default to 0
+  const count = state.get('counter', 0)
+  
+  // Play different notes based on counter
+  const notes = ['C4', 'D4', 'E4', 'G4']
+  const note = notes[count % notes.length]
+  
+  // Update counter for next time
+  const newState = state.withUserState({ counter: count + 1 })
+  
+  return { actions: [midi.note(note)(state)] }
+}
+```
+
+**Query State for Conditional Logic:**
+```javascript
+const dynamic = (state) => {
+  // Different behavior per section
   if (state.isFirstBeatOfBar()) {
+    return { actions: [midi.note('C2')(state)] }
+  }
+  
+  // Different behavior per bar
+  if (state.bar % 4 === 0) {
+    return { actions: [midi.note('C3')(state)] }
+  }
+  
+  return { actions: [] }
+}
+```
+
+### Performance Tips
+
+**Mute Tracks During Development:**
+```javascript
+// Mute drums while working on melody
+drums.mute()
+
+// Solo just the track you're working on
+melody.soloTrack('lead')
+```
+
+**Use the Simulator:**
+```javascript
+// Test patterns before sending to MIDI
+const sim = simulator.create(mySong)
+console.log(sim.visualize(4))
+
+// Verify timing
+const results = sim.run(1)
+results.forEach(r => {
+  console.log(`Tick ${r.tick}: ${r.actions.length} actions`)
+})
+```
+
+**Hot Reload Workflow:**
+1. Start `thrum music.js`
+2. Edit patterns in your editor
+3. Save file
+4. Changes apply immediately
+5. Iterate quickly!
+
+## Advanced Patterns
+
+### Polyrhythms
+
+```javascript
+// 3 against 4
+const three = pattern.euclidean(3, 12).play(midi.note('C4'))
+const four = pattern.pattern('x---x---x---').play(midi.note('E4'))
+```
+
+### Probability
+
+```javascript
+const probabilistic = (state) => {
+  // 50% chance to play
+  if (Math.random() > 0.5) {
     return { actions: [midi.note('C4')(state)] }
   }
   return { actions: [] }
 }
 ```
 
-### Track Abstraction (lib-next)
-
-Named tracks, groups, and arrangements for better song organization:
+### Generative Sequences
 
 ```javascript
-const { track, group, arrangement } = require('thrum/lib-next/track')
-const pattern = require('thrum/lib-next/pattern')
-const midi = require('thrum/lib-next/midi')
-
-// Named tracks
-const kick = track('kick',
-  pattern.pattern('x---x---').play(midi.note('C2'))
-)
-
-const snare = track('snare',
-  pattern.pattern('----x---').play(midi.note('D2'))
-)
-
-// Track groups (busses)
-const drums = group('drums', [kick, snare])
-
-// Mute/solo controls
-kick.mute()
-kick.unmute()
-kick.toggleMute()
-
-drums.muteTrack('kick')
-drums.soloTrack('snare')
-drums.unsoloAll()
-
-// Song arrangements with sections
-const mySong = arrangement([
-  [2, 'intro', introTracks],
-  [4, 'verse', verseTracks],
-  [4, 'chorus', chorusTracks],
-  [2, 'outro', outroTracks]
-])
-
-// Section info is available in state
-const verseTrack = (state) => {
-  console.log(state.get('section'))      // 'verse'
-  console.log(state.get('sectionBar'))   // bar within section
-  console.log(state.get('absoluteBar'))  // absolute bar number
+const generative = (state) => {
+  const scale = ['C4', 'D4', 'E4', 'G4', 'A4']
+  const index = state.bar % scale.length
+  
+  if (state.isFirstBeatOfBar()) {
+    return { actions: [midi.note(scale[index])(state)] }
+  }
+  
   return { actions: [] }
 }
 ```
 
-See `examples/track-demo.js` for complete examples.
+### Dynamic Velocity
+
+```javascript
+const dynamics = (state) => {
+  // Crescendo over 4 bars
+  const velocity = 60 + (state.bar % 4) * 15
+  
+  if (state.isFirstBeatOfBar()) {
+    return { actions: [midi.note('C4', { velocity })(state)] }
+  }
+  
+  return { actions: [] }
+}
+```
+
+## API Reference
+
+### Pattern Module
+
+- `pattern.pattern(str)` - Create a pattern from string notation
+- `pattern.euclidean(pulses, steps)` - Create euclidean rhythm
+- `pattern.play(midiFunc)` - Attach MIDI function to pattern
+
+### MIDI Module
+
+- `midi.note(note, options)` - Create note action
+- `midi.chord(notes, options)` - Create chord action
+- `midi.cc(controller, value, options)` - Create CC action
+
+### Track Module
+
+- `track(name, trackFunc, options)` - Create named track
+- `group(name, tracks, options)` - Create track group
+- `arrangement(sections)` - Create section-based arrangement
+
+### Song Module
+
+- `song.create(tracks, options)` - Create song from tracks
+- `song.section(barsPerSection, func)` - Create section-based track
+
+### State Module
+
+- `State.from(bar, beat, tick)` - Create state from position
+- `State.fromTick(absoluteTick)` - Create state from tick count
+- `state.isFirstBeatOfBar()` - Check if bar start
+- `state.isBeat(n)` - Check if specific beat
+- `state.positionInBar()` - Get position in ticks
+- `state.withUserState(updates)` - Create new state with user data
+- `state.get(key, default)` - Get user state value
+
+### Simulator Module
+
+- `simulator.create(song, options)` - Create simulator
+- `sim.run(bars)` - Run for N bars
+- `sim.tick(absoluteTick)` - Run single tick
+- `sim.timeline(bars)` - Get detailed timeline
+- `sim.visualize(bars)` - ASCII visualization
+
+## Examples
+
+See the `examples/` directory for complete examples:
+
+- `simulator-demo.js` - Basic simulator usage
+- `track-demo.js` - Named tracks, groups, and arrangements
+
+## Contributing
+
+Contributions welcome! Please open an issue or PR on GitHub.
+
+## License
+
+MIT
+
+## Links
+
+- [GitHub Repository](https://github.com/ryanramage/thrum)
+- [Live Coding Examples](https://github.com/ryanramage/thrum-examples)
+- [Web Synth (Enfer)](https://ryanramage.github.io/Enfer/)
