@@ -13,8 +13,8 @@ test('functional song - verse with bass and chords', t => {
     // Bass line - funky 16th note pattern
     pattern('x--x--x-x---x-x-', play('C2')),
     
-    // Chord stabs on beats 2 and 4
-    pattern('----x-------x---', strum(chord('CM7').octave(4)))
+    // Chord stabs on first beat too
+    pattern('x-------x-------', strum(chord('CM7').octave(4)))
   ])
 
   // testing
@@ -45,6 +45,7 @@ test('functional song - melodic sequence with transpose', t => {
 
   // testing
   t.ok(result, 'result exists')
+  t.ok(result.actions.length > 0, 'has actions')
   
   let originalNote = result.actions.find(a => a.note === 'E4')
   t.ok(originalNote, 'original melody note E4 is played')
@@ -148,10 +149,10 @@ test('functional song - complete 4-bar phrase', t => {
     pattern('x-------x-------', play('C2')),
     
     // Chord progression
-    pattern('----x-------x---', strum(chord('CM7').octave(3))),
+    pattern('x-------x-------', strum(chord('CM7').octave(3))),
     
     // Melody
-    pattern('--x---x---x-x---', play('E5')),
+    pattern('x-x---x---x-x---', play('E5')),
     
     // Percussion
     pattern('x-x-x-x-x-x-x-x-', play('F#1'))
