@@ -32,7 +32,7 @@ npm install -g thrum
 Create a simple kick drum pattern:
 
 ```javascript
-const { pattern, midi, song, simulator } = require('thrum/lib-next')
+const { pattern, midi, song, simulator } = require('thrum/lib')
 
 // Create a pattern that plays on beats 1 and 3
 const kick = pattern.pattern('x---x---').play(
@@ -55,7 +55,7 @@ console.log(sim.visualize(4)) // ASCII visualization
 Build a drum beat with multiple patterns:
 
 ```javascript
-const { pattern, midi, song, simulator } = require('thrum/lib-next')
+const { pattern, midi, song, simulator } = require('thrum/lib')
 
 // Kick on 1 and 3
 const kick = pattern.pattern('x---x---').play(
@@ -88,7 +88,7 @@ Patterns define when notes play using a simple string notation:
 - `-` = rest (silence)
 
 ```javascript
-const { pattern, midi } = require('thrum/lib-next')
+const { pattern, midi } = require('thrum/lib')
 
 // Quarter notes on beats 1 and 3
 pattern.pattern('x---x---').play(midi.note('C4'))
@@ -109,7 +109,7 @@ pattern.euclidean(3, 8).play(midi.note('C4'))
 MIDI functions define what happens when a pattern triggers:
 
 ```javascript
-const { midi } = require('thrum/lib-next')
+const { midi } = require('thrum/lib')
 
 // Single note
 midi.note('C4')
@@ -129,7 +129,7 @@ midi.cc(16, 64, { channel: 1 })
 Organize your music with named tracks:
 
 ```javascript
-const { track, pattern, midi } = require('thrum/lib-next')
+const { track, pattern, midi } = require('thrum/lib')
 
 const kick = track('kick',
   pattern.pattern('x---x---').play(midi.note('C2'))
@@ -153,7 +153,7 @@ kick.setChannel(9)
 Group related tracks together:
 
 ```javascript
-const { track, group, pattern, midi } = require('thrum/lib-next')
+const { track, group, pattern, midi } = require('thrum/lib')
 
 const kick = track('kick', pattern.pattern('x---').play(midi.note('C2')))
 const snare = track('snare', pattern.pattern('----x---').play(midi.note('D2')))
@@ -176,7 +176,7 @@ drums.unsoloAll()
 Structure your song with sections:
 
 ```javascript
-const { arrangement, track, pattern, midi } = require('thrum/lib-next')
+const { arrangement, track, pattern, midi } = require('thrum/lib')
 
 // Define tracks for each section
 const introKick = track('intro-kick',
@@ -219,7 +219,7 @@ const dynamicTrack = (state) => {
 Thrum uses an immutable State object with helpful methods:
 
 ```javascript
-const { State } = require('thrum/lib-next/state')
+const { State } = require('thrum/lib/state')
 
 // Create state
 const state = State.from(0, 0, 0) // bar 0, beat 0, tick 0
@@ -269,7 +269,7 @@ const onDownbeat = (state) => {
 Test your music without MIDI hardware:
 
 ```javascript
-const { simulator, song, pattern, midi } = require('thrum/lib-next')
+const { simulator, song, pattern, midi } = require('thrum/lib')
 
 const kick = pattern.pattern('x---x---').play(midi.note('C2'))
 const mySong = song.create([kick], { tempo: 120 })
@@ -306,7 +306,7 @@ Use the simulator in your tests:
 
 ```javascript
 const test = require('tape')
-const { simulator, song, pattern, midi } = require('thrum/lib-next')
+const { simulator, song, pattern, midi } = require('thrum/lib')
 
 test('kick pattern plays on beats 1 and 3', t => {
   const kick = pattern.pattern('x---x---').play(midi.note('C2'))
@@ -362,9 +362,9 @@ touch music.js
 4. **Create `music.js` using the new API:**
 
 ```javascript
-const pattern = require('thrum/lib-next/pattern')
-const midi = require('thrum/lib-next/midi')
-const song = require('thrum/lib-next/song')
+const pattern = require('thrum/lib/pattern')
+const midi = require('thrum/lib/midi')
+const song = require('thrum/lib/song')
 
 // Create patterns
 const kick = pattern.pattern('x---x---x---x---').play(midi.note('C2', { channel: 9 }))

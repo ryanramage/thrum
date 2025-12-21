@@ -4,11 +4,11 @@
  * Demonstrates named tracks, groups, and arrangements.
  */
 
-const simulator = require('../lib-next/simulator')
-const song = require('../lib-next/song')
-const { track, group, arrangement } = require('../lib-next/track')
-const pattern = require('../lib-next/pattern')
-const midi = require('../lib-next/midi')
+const simulator = require('../lib/simulator')
+const song = require('../lib/song')
+const { track, group, arrangement } = require('../lib/track')
+const pattern = require('../lib/pattern')
+const midi = require('../lib/midi')
 
 console.log('=== Track Abstraction Demo ===\n')
 

@@ -1,13 +1,18 @@
-// Main API exports for thrum-next
-
-const song = require('./song')
-const pattern = require('./pattern')
-const midi = require('./midi')
-const structure = require('./structure')
+// Main API exports for Thrum
+const song = require('./lib/song')
+const pattern = require('./lib/pattern')
+const midi = require('./lib/midi')
+const structure = require('./lib/structure')
+const track = require('./lib/track')
+const simulator = require('./lib/simulator')
+const { State } = require('./lib/state')
 
 module.exports = {
   song,
   pattern,
   midi,
-  structure
+  structure,
+  track,
+  simulator,
+  State
 }

@@ -1,8 +1,8 @@
 const test = require('tape')
-const { track, group, arrangement } = require('../lib-next/track')
-const { State } = require('../lib-next/state')
-const pattern = require('../lib-next/pattern')
-const midi = require('../lib-next/midi')
+const { track, group, arrangement } = require('../lib/track')
+const { State } = require('../lib/state')
+const pattern = require('../lib/pattern')
+const midi = require('../lib/midi')
 
 test('track - creates a named track', t => {
   const t1 = track('kick', (state) => {

@@ -1,5 +1,5 @@
 const test = require('tape')
-const structure = require('../lib-next/structure.js')
+const structure = require('../lib/structure.js')
 
 test('structure.bars - triggers at start of bar count', t => {
   let triggered = false

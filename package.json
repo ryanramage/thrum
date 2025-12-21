@@ -7,9 +7,8 @@
     "thrum": "./livecoding.js"
   },
   "scripts": {
-    "test": "find test -name '*.js' -exec node {} \\;",
-    "test-next": "tape test-next/**/*.js",
-    "watch-next": "nodemon --watch lib-next --watch test-next --exec npm run test-next"
+    "test": "tape test/**/*.js",
+    "watch": "nodemon --watch lib --watch test --exec npm test"
   },
   "repository": {
     "type": "git",

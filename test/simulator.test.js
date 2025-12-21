@@ -1,8 +1,8 @@
 const test = require('tape')
-const simulator = require('../lib-next/simulator')
-const song = require('../lib-next/song')
-const pattern = require('../lib-next/pattern')
-const midi = require('../lib-next/midi')
+const simulator = require('../lib/simulator')
+const song = require('../lib/song')
+const pattern = require('../lib/pattern')
+const midi = require('../lib/midi')
 
 test('simulator.create - creates a simulator with defaults', t => {
   const s = song.create([], { tempo: 120, meter: [4, 4] })

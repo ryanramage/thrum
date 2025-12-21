@@ -5,10 +5,10 @@
  * Thrum songs without MIDI hardware.
  */
 
-const simulator = require('../lib-next/simulator')
-const song = require('../lib-next/song')
-const pattern = require('../lib-next/pattern')
-const midi = require('../lib-next/midi')
+const simulator = require('../lib/simulator')
+const song = require('../lib/song')
+const pattern = require('../lib/pattern')
+const midi = require('../lib/midi')
 
 // Create a simple drum pattern
 const kick = pattern.pattern('x---x---x---x---').play(

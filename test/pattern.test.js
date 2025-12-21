@@ -1,5 +1,5 @@
 const test = require('tape')
-const { pattern, euclidean }  = require('../lib-next/pattern.js')
+const { pattern, euclidean }  = require('../lib/pattern.js')
 
 test('pattern - creates a pattern from string', t => {
   const p = pattern('x---')

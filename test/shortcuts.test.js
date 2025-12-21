@@ -1,5 +1,5 @@
 const test = require('tape')
-const { kick, snare, house, fourOnFloor, createDrumMap } = require('../lib-next/shortcuts')
+const { kick, snare, house, fourOnFloor, createDrumMap } = require('../lib/shortcuts')
 
 test('kick returns a track function', t => {
   const k = kick()
@@ -8,7 +8,7 @@ test('kick returns a track function', t => {
 })
 
 test('pattern compilation handles different lengths correctly', t => {
-  const { pattern } = require('../lib-next/pattern')
+  const { pattern } = require('../lib/pattern')
   
   // Test 8-character pattern (should use 6 ticks per char for 16th notes)
   const eightChar = pattern('x-x-x-x-')
@@ -32,7 +32,7 @@ test('pattern compilation handles different lengths correctly', t => {
 })
 
 test('16th note pattern timing is correct', t => {
-  const { pattern } = require('../lib-next/pattern')
+  const { pattern } = require('../lib/pattern')
   
   // 16-char pattern: each char = 6 ticks
   const p = pattern('x-x-x-x-x-x-x-x-')
@@ -58,7 +58,7 @@ test('16th note pattern timing is correct', t => {
 })
 
 test('beat pattern timing is correct', t => {
-  const { pattern } = require('../lib-next/pattern')
+  const { pattern } = require('../lib/pattern')
   
   // 4-char pattern: each char = 24 ticks
   const p = pattern('x-x-')
@@ -80,7 +80,7 @@ test('beat pattern timing is correct', t => {
 })
 
 test('pattern wraps correctly across bars', t => {
-  const { pattern } = require('../lib-next/pattern')
+  const { pattern } = require('../lib/pattern')
   
   // 4-char pattern should repeat every 4 beats
   const p = pattern('x---')
@@ -103,7 +103,7 @@ test('pattern wraps correctly across bars', t => {
 })
 
 test('closedHat pattern timing', t => {
-  const { closedHat } = require('../lib-next/shortcuts')
+  const { closedHat } = require('../lib/shortcuts')
   
   const h = closedHat()
   
@@ -130,7 +130,7 @@ test('closedHat pattern timing', t => {
 })
 
 test('empty pattern handling', t => {
-  const { pattern } = require('../lib-next/pattern')
+  const { pattern } = require('../lib/pattern')
   
   const p = pattern('----')
   
