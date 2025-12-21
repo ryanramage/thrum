@@ -1,5 +1,5 @@
 const test = require('tape')
-const { pattern } = require('../lib-next')
+const { pattern, euclidean }  = require('../lib-next/pattern.js')
 
 test('pattern - creates a pattern from string', t => {
   const p = pattern('x---')
@@ -65,7 +65,7 @@ test('pattern - repeats pattern', t => {
 })
 
 test('pattern.euclidean - generates euclidean rhythm', t => {
-  const p = pattern.euclidean(3, 8)
+  const p = euclidean(3, 8)
   
   t.ok(p, 'euclidean pattern created')
   t.ok(p.play, 'has play method')

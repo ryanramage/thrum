@@ -37,7 +37,6 @@ function compile(str) {
 
 function euclidean(pulses, steps) {
   // Euclidean rhythm algorithm
-  const pattern = []
   const bucket = []
   
   for (let i = 0; i < steps; i++) {

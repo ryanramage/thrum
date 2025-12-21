@@ -1,5 +1,5 @@
 const test = require('tape')
-const { song } = require('../lib-next')
+const song = require('../lib-next/song.js')
 
 test('song.create - creates a song with tracks', t => {
   const s = song.create([])

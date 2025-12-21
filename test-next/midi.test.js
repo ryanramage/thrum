@@ -1,5 +1,5 @@
 const test = require('tape')
-const { midi } = require('../lib-next')
+const  midi = require('../lib-next/midi.js')
 
 test('midi.note - creates a note action', t => {
   const noteFunc = midi.note('C4')
