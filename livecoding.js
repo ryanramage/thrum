@@ -82,6 +82,12 @@ function midi () {
     if (inputs && inputs.length) selectedInput = inputs[0].name
   }
 
+  if (!selectedInput) {
+    console.log('No MIDI input found')
+    usage()
+    return
+  }
+
   JZZ().or('Cannot start MIDI engine!')
   const input = JZZ().openMidiIn(selectedInput)
 
