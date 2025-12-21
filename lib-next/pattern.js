@@ -36,11 +36,9 @@ function compile(str) {
   
   chars.forEach((char, i) => {
     if (char === 'x') {
-      // Mark all ticks in this 16th note as hits
+      // Only mark the first tick of this 16th note as a hit
       const startTick = i * ticksPerChar
-      for (let tick = startTick; tick < startTick + ticksPerChar; tick++) {
-        hits[tick] = true
-      }
+      hits[startTick] = true
     }
   })
   
