@@ -4,14 +4,24 @@ const lengths = require('../lib/lengths')
 module.exports = R.curryN(4, play)
 
 function play(options, notes, count, length, state) {
-  // not sure how to model this properly, so for now
+  // Handle different calling patterns
   if (!state) {
-    // we got empty options, shuffle
-    state = length
-    length = count
-    count = notes
-    notes = options
-    options = {}
+    // Check if we're being called with fewer arguments (from shortcuts)
+    if (typeof options === 'string' && typeof notes === 'number' && typeof count === 'number' && typeof length === 'object') {
+      // Called as play(note, count, length, state)
+      state = length
+      length = count
+      count = notes
+      notes = options
+      options = {}
+    } else {
+      // Original pattern: we got empty options, shuffle
+      state = length
+      length = count
+      count = notes
+      notes = options
+      options = {}
+    }
   }
   let _msg = { to: 'toMidi' }
     if (typeof notes === 'object' && notes.octave && typeof notes.octave === 'function') {
