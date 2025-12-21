@@ -39,8 +39,8 @@ test('functional song - melodic sequence with transpose', t => {
 
   // Melodic pattern that gets transposed up a fifth
   tick([
-    pattern('x-x-x-x-', play('E4')),
-    transpose('5P', pattern('x-x-x-x-', play('E4')))  // Same pattern, perfect fifth higher
+    repeat('8n', play('E4')),
+    transpose('5P', repeat('8n', play('E4')))  // Same pattern, perfect fifth higher
   ])
 
   // testing
