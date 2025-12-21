@@ -2,12 +2,21 @@ const test = require('tape')
 const thrum = require('../index').meter(4, '4n')
 
 test('shortcuts - kick with default pattern', t => {
-  const { actions } = thrum.test([
+  const result = thrum.test([
     thrum.kick()
   ])
   
-  t.ok(actions.length > 0, 'kick produces actions')
-  t.equals(actions[0].note, 'C1', 'kick uses C1 note')
+  console.log('result:', result)
+  console.log('actions:', result.actions)
+  console.log('actions length:', result.actions ? result.actions.length : 'undefined')
+  
+  t.ok(result.actions, 'actions exist')
+  t.ok(result.actions.length > 0, 'kick produces actions')
+  if (result.actions && result.actions.length > 0) {
+    t.equals(result.actions[0].note, 'C1', 'kick uses C1 note')
+  } else {
+    t.fail('no actions produced')
+  }
   
   t.end()
 })
@@ -18,7 +27,9 @@ test('shortcuts - kick with custom pattern', t => {
   ])
   
   t.ok(actions.length > 0, 'custom kick pattern produces actions')
-  t.equals(actions[0].note, 'C1', 'kick uses C1 note')
+  if (actions.length > 0) {
+    t.equals(actions[0].note, 'C1', 'kick uses C1 note')
+  }
   
   t.end()
 })
@@ -35,7 +46,9 @@ test('shortcuts - snare with default pattern', t => {
   ], { spp: 96 })
   
   t.ok(actions2.length > 0, 'snare fires at spp 96 (beat 2)')
-  t.equals(actions2[0].note, 'D1', 'snare uses D1 note')
+  if (actions2.length > 0) {
+    t.equals(actions2[0].note, 'D1', 'snare uses D1 note')
+  }
   
   t.end()
 })
@@ -46,7 +59,9 @@ test('shortcuts - hihat with default pattern', t => {
   ])
   
   t.ok(actions.length > 0, 'hihat produces actions')
-  t.equals(actions[0].note, 'F#1', 'hihat uses F#1 note')
+  if (actions.length > 0) {
+    t.equals(actions[0].note, 'F#1', 'hihat uses F#1 note')
+  }
   
   t.end()
 })
