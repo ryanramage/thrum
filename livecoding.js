@@ -84,26 +84,26 @@ function initMIDI() {
   JZZ().or(function(err) {
     console.error('MIDI: Cannot start engine!', err)
     process.exit(1)
-  }).and(function() {
-    console.log('MIDI: Engine initialized:', JZZ().info().engine)
+  }).and(function(jzz) {
+    console.log('MIDI: Engine initialized:', jzz.info().engine)
     
     // Find input
     let selectedInput = config.in
     if (!selectedInput) {
-      const inputs = JZZ().info().inputs
+      const inputs = jzz.info().inputs
       if (inputs && inputs.length) selectedInput = inputs[0].name
     }
     
     if (!selectedInput) {
       console.error('MIDI: No input found')
-      console.log('Available inputs:', JZZ().info().inputs)
+      console.log('Available inputs:', jzz.info().inputs)
       process.exit(1)
     }
     
     // Find output
     let selectedOutput = config.out
     if (!selectedOutput) {
-      const outputs = JZZ().info().outputs
+      const outputs = jzz.info().outputs
       if (outputs && outputs.length) selectedOutput = outputs[0].name
     }
     
@@ -114,7 +114,7 @@ function initMIDI() {
       console.log('MIDI: No output configured (will not send MIDI)')
     }
     
-    JZZ().openMidiIn(selectedInput).or(function(err) {
+    jzz.openMidiIn(selectedInput).or(function(err) {
       console.error('MIDI: Failed to open input:', err)
       process.exit(1)
     }).and(function(midiIn) {
@@ -122,7 +122,7 @@ function initMIDI() {
       
       // Open output if configured
       if (selectedOutput) {
-        midiOut = JZZ().openMidiOut(selectedOutput)
+        midiOut = jzz.openMidiOut(selectedOutput)
         console.log('MIDI: Output opened successfully')
       }
       
@@ -261,8 +261,8 @@ if (!config._[0]) {
   console.log('Usage: thrum file.js')
   console.log('Available MIDI ports:')
   
-  JZZ().or('Cannot start MIDI engine!').and(function() {
-    const info = JZZ().info()
+  JZZ().or('Cannot start MIDI engine!').and(function(jzz) {
+    const info = jzz.info()
     console.log('\nInputs:')
     if (info.inputs && info.inputs.length > 0) {
       info.inputs.forEach(function(input) {
