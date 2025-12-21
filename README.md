@@ -1,9 +1,9 @@
 Priority Order (if implementing incrementally):
 
- 1 #5 (Defaults/Shortcuts) - Easiest, immediate impact, no breaking changes
- 2 #2 (DSL order) - Medium effort, huge readability improvement
- 3 #4 (State management) - Simplifies usage significantly
- 4 #3 (Track abstraction) - Enables better song structure
+ 1 #5 (Defaults/Shortcuts) - ✅ Done
+ 2 #2 (DSL order) - ✅ Done - API now reads naturally: `pattern('x---').play('C4')`
+ 3 #4 (State management) - ✅ Done - Immutable State class with helper methods
+ 4 #3 (Track abstraction) - ✅ Done - Named tracks, groups, and arrangements
  5 #1 (Unify API) - Biggest change, but cleanest result
 
 thrum
@@ -196,7 +196,7 @@ Thrum includes a simulator that lets you test and develop songs without MIDI har
 - Visualizing patterns before playing them
 - Running in CI/CD environments
 
-Example usage:
+Example usage with the new DSL order:
 
 ```javascript
 const simulator = require('thrum/lib-next/simulator')
@@ -204,9 +204,10 @@ const song = require('thrum/lib-next/song')
 const pattern = require('thrum/lib-next/pattern')
 const midi = require('thrum/lib-next/midi')
 
-// Create a song
+// Create a song using the natural DSL order
 const kick = pattern.pattern('x---x---').play(midi.note('C2'))
-const mySong = song.create([kick], { tempo: 120 })
+const snare = pattern.pattern('----x---').play(midi.note('D2'))
+const mySong = song.create([kick, snare], { tempo: 120 })
 
 // Create simulator
 const sim = simulator.create(mySong)
@@ -224,3 +225,104 @@ console.log(sim.visualize(4))
 ```
 
 See `examples/simulator-demo.js` for a complete example.
+
+### New DSL Order (lib-next)
+
+The new API in `lib-next/` uses a more natural, chainable syntax:
+
+```javascript
+// Old style (still works in lib/)
+pattern('x---', play('C4'))
+
+// New style (lib-next/)
+pattern('x---').play(note('C4'))
+```
+
+This makes the code read more naturally from left to right: "create a pattern, then play a note".
+
+### State Management (lib-next)
+
+The new State class provides immutable state with helpful methods:
+
+```javascript
+const { State } = require('thrum/lib-next/state')
+
+// Create state
+const state = State.from(0, 0, 0) // bar 0, beat 0, tick 0
+const state2 = State.fromTick(96) // from absolute tick
+
+// Helper methods
+state.isFirstBeatOfBar()  // true if bar 0, beat 0, tick 0
+state.isBeat(2)           // true if on beat 2
+state.isBar(0)            // true if on bar 0
+state.positionInBar()     // 0-95 for 4/4 time
+state.position()          // "1.1.0" (human readable)
+
+// User state (for counters, etc.)
+const state3 = state.withUserState({ counter: 5 })
+state3.get('counter')     // 5
+state3.get('missing', 0)  // 0 (default value)
+
+// Immutable - properties cannot be changed
+state.bar = 5  // throws error
+```
+
+Tracks receive State objects automatically:
+
+```javascript
+const track = (state) => {
+  if (state.isFirstBeatOfBar()) {
+    return { actions: [midi.note('C4')(state)] }
+  }
+  return { actions: [] }
+}
+```
+
+### Track Abstraction (lib-next)
+
+Named tracks, groups, and arrangements for better song organization:
+
+```javascript
+const { track, group, arrangement } = require('thrum/lib-next/track')
+const pattern = require('thrum/lib-next/pattern')
+const midi = require('thrum/lib-next/midi')
+
+// Named tracks
+const kick = track('kick',
+  pattern.pattern('x---x---').play(midi.note('C2'))
+)
+
+const snare = track('snare',
+  pattern.pattern('----x---').play(midi.note('D2'))
+)
+
+// Track groups (busses)
+const drums = group('drums', [kick, snare])
+
+// Mute/solo controls
+kick.mute()
+kick.unmute()
+kick.toggleMute()
+
+drums.muteTrack('kick')
+drums.soloTrack('snare')
+drums.unsoloAll()
+
+// Song arrangements with sections
+const mySong = arrangement([
+  [2, 'intro', introTracks],
+  [4, 'verse', verseTracks],
+  [4, 'chorus', chorusTracks],
+  [2, 'outro', outroTracks]
+])
+
+// Section info is available in state
+const verseTrack = (state) => {
+  console.log(state.get('section'))      // 'verse'
+  console.log(state.get('sectionBar'))   // bar within section
+  console.log(state.get('absoluteBar'))  // absolute bar number
+  return { actions: [] }
+}
+```
+
+See `examples/track-demo.js` for complete examples.
