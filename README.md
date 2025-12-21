@@ -1,3 +1,11 @@
+Priority Order (if implementing incrementally):
+
+ 1 #5 (Defaults/Shortcuts) - Easiest, immediate impact, no breaking changes
+ 2 #2 (DSL order) - Medium effort, huge readability improvement
+ 3 #4 (State management) - Simplifies usage significantly
+ 4 #3 (Track abstraction) - Enables better song structure
+ 5 #1 (Unify API) - Biggest change, but cleanest result
+
 thrum
 =====
 
