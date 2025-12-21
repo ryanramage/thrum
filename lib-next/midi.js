@@ -2,9 +2,9 @@
 
 function note(noteValue, options = {}) {
   return (state) => {
-    const velocity = options.velocity || 100
-    const length = options.length || 24
-    const channel = options.channel || 0
+    const velocity = options.velocity !== undefined ? options.velocity : 100
+    const length = options.length !== undefined ? options.length : 24
+    const channel = options.channel !== undefined ? options.channel : 0
     
     return {
       type: 'note',
@@ -18,10 +18,10 @@ function note(noteValue, options = {}) {
 
 function chord(notes, options = {}) {
   return (state) => {
-    const velocity = options.velocity || 100
-    const length = options.length || 24
-    const channel = options.channel || 0
-    const spread = options.spread || 0
+    const velocity = options.velocity !== undefined ? options.velocity : 100
+    const length = options.length !== undefined ? options.length : 24
+    const channel = options.channel !== undefined ? options.channel : 0
+    const spread = options.spread !== undefined ? options.spread : 0
     
     return notes.map((noteValue, i) => ({
       type: 'note',
@@ -36,7 +36,7 @@ function chord(notes, options = {}) {
 
 function cc(controller, value, options = {}) {
   return (state) => {
-    const channel = options.channel || 0
+    const channel = options.channel !== undefined ? options.channel : 0
     
     return {
       type: 'cc',
