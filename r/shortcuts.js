@@ -10,7 +10,7 @@ module.exports = (meter) => {
     kick: (patternStr) => {
       const defaultPattern = 'x---x---x---x---' // 4 on the floor
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'C1', count, length, st)
+        const playOp = (count, length, st) => play('C1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -18,7 +18,7 @@ module.exports = (meter) => {
     snare: (patternStr) => {
       const defaultPattern = '----x-------x---' // backbeat
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'D1', count, length, st)
+        const playOp = (count, length, st) => play('D1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -26,7 +26,7 @@ module.exports = (meter) => {
     hihat: (patternStr) => {
       const defaultPattern = 'x-x-x-x-x-x-x-x-' // 8th notes
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'F#1', count, length, st)
+        const playOp = (count, length, st) => play('F#1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -34,7 +34,7 @@ module.exports = (meter) => {
     closedHat: (patternStr) => {
       const defaultPattern = 'x-x-x-x-x-x-x-x-'
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'F#1', count, length, st)
+        const playOp = (count, length, st) => play('F#1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -42,7 +42,7 @@ module.exports = (meter) => {
     openHat: (patternStr) => {
       const defaultPattern = '--x---x---x---x-'
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'A#1', count, length, st)
+        const playOp = (count, length, st) => play('A#1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -50,7 +50,7 @@ module.exports = (meter) => {
     clap: (patternStr) => {
       const defaultPattern = '----x-------x---'
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'D#1', count, length, st)
+        const playOp = (count, length, st) => play('D#1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -58,7 +58,7 @@ module.exports = (meter) => {
     rim: (patternStr) => {
       const defaultPattern = '----x-------x---'
       return (state) => {
-        const playOp = (count, length, st) => play({}, 'C#1', count, length, st)
+        const playOp = (count, length, st) => play('C#1', count, length, st)
         return pattern(patternStr || defaultPattern, playOp)(state)
       }
     },
@@ -66,30 +66,30 @@ module.exports = (meter) => {
     // Preset drum kits
     fourOnFloor: () => [
       (state) => {
-        const playOp = (count, length, st) => play({}, 'C1', count, length, st)
+        const playOp = (count, length, st) => play('C1', count, length, st)
         return pattern('x---x---x---x---', playOp)(state)
       },
       (state) => {
-        const playOp = (count, length, st) => play({}, 'D1', count, length, st)
+        const playOp = (count, length, st) => play('D1', count, length, st)
         return pattern('----x-------x---', playOp)(state)
       },
       (state) => {
-        const playOp = (count, length, st) => play({}, 'F#1', count, length, st)
+        const playOp = (count, length, st) => play('F#1', count, length, st)
         return pattern('x-x-x-x-x-x-x-x-', playOp)(state)
       }
     ],
     
     breakbeat: () => [
       (state) => {
-        const playOp = (count, length, st) => play({}, 'C1', count, length, st)
+        const playOp = (count, length, st) => play('C1', count, length, st)
         return pattern('x---x-x---x-x---', playOp)(state)
       },
       (state) => {
-        const playOp = (count, length, st) => play({}, 'D1', count, length, st)
+        const playOp = (count, length, st) => play('D1', count, length, st)
         return pattern('----x-------x---', playOp)(state)
       },
       (state) => {
-        const playOp = (count, length, st) => play({}, 'F#1', count, length, st)
+        const playOp = (count, length, st) => play('F#1', count, length, st)
         return pattern('x-x-x-x-x-x-x-x-', playOp)(state)
       }
     ]
