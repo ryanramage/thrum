@@ -359,16 +359,22 @@ touch music.js
 }
 ```
 
-4. **Create `music.js`:**
+4. **Create `music.js` using the new API:**
 
 ```javascript
-const { tick, clip } = require('thrum')
+const pattern = require('thrum/lib-next/pattern')
+const midi = require('thrum/lib-next/midi')
+const song = require('thrum/lib-next/song')
 
-tick([
-  clip('x---x---x---x---', ['C2']),
-  clip('----x-------x---', ['D2']),
-  clip('x-x-x-x-x-x-x-x-', ['F#2'])
-])
+// Create patterns
+const kick = pattern.pattern('x---x---x---x---').play(midi.note('C2', { channel: 9 }))
+const snare = pattern.pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
+const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2', { channel: 9 }))
+
+// Create and export the song
+const mySong = song.create([kick, snare, hihat], { tempo: 120 })
+
+module.exports = mySong
 ```
 
 5. **Start Thrum:**
