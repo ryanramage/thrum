@@ -71,7 +71,6 @@ const initCC = track('init-cc',
 const emergenceChords = track('emergence-chords',
   chordProgression(
     [chords.Cmaj9, chords.Am11, chords.Fmaj7sharp11, chords.Gsus2],
-    'x---------------',
     {
       barsPerChord: 4,
       velocity: 40,
@@ -152,7 +151,6 @@ const emergenceChorus = track('emergence-chorus',
 const driftChords = track('drift-chords',
   chordProgression(
     [chords.Cmaj9, chords.Am11, chords.Fmaj7sharp11, chords.Gsus2, chords.Dm9, chords.Em7],
-    'x---------------',
     {
       barsPerChord: 4,
       velocity: 50,
@@ -257,7 +255,6 @@ const driftChorus = track('drift-chorus',
 const expansionChords = track('expansion-chords',
   chordProgression(
     [chords.Cmaj9, chords.Am11, chords.Fmaj7sharp11, chords.Gsus2, chords.Dm9, chords.Em7],
-    'x---------------',
     {
       barsPerChord: 4,
       velocity: 60,
@@ -375,7 +372,6 @@ const expansionChorus = track('expansion-chorus',
 const dissolutionChords = track('dissolution-chords',
   chordProgression(
     [chords.Gsus2, chords.Fmaj7sharp11, chords.Am11, chords.Cmaj9],
-    'x---------------',
     {
       barsPerChord: 4,
       velocity: 45,
