@@ -12,6 +12,30 @@ const shortcuts = require('./lib/shortcuts')
 const Tonal = require('@tonaljs/tonal')
 const JZZ = require('jzz')
 
+// Tonal helper functions for more concise usage
+const tonal = {
+  // Get chord notes as MIDI numbers for a specific octave
+  chord: (chordName, octave = 4) => {
+    return Tonal.Chord.get(chordName).notes.map(note => Tonal.Note.midi(`${note}${octave}`))
+  },
+  
+  // Get scale notes as MIDI numbers
+  scale: (scaleName) => {
+    return Tonal.Scale.get(scaleName).notes.map(note => Tonal.Note.midi(note))
+  },
+  
+  // Convert note name to MIDI number
+  midi: (noteName) => {
+    return Tonal.Note.midi(noteName)
+  },
+  
+  // Get chord with custom voicing (spread across octaves)
+  voicing: (chordName, octaves) => {
+    const notes = Tonal.Chord.get(chordName).notes
+    return notes.map((note, i) => Tonal.Note.midi(`${note}${octaves[i] || octaves[0]}`))
+  }
+}
+
 module.exports = {
   song,
   pattern,
@@ -28,6 +52,9 @@ module.exports = {
   // External dependencies
   Tonal,
   JZZ,
+  
+  // Tonal helpers
+  tonal,
   
   // Convenience exports from shortcuts for easier access
   arp: shortcuts.arp,

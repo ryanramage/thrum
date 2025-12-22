@@ -1,4 +1,4 @@
-const { song, track, pattern, midi, arp, chordProgression, ccRamp, ccLFO, ccCurve, arrangement, Tonal } = require('../index')
+const { song, track, pattern, midi, arp, chordProgression, ccRamp, ccLFO, ccCurve, arrangement, tonal } = require('../index')
 
 // ============================================================================
 // PIANO SYNTH COMPOSITION: "Luminescence"
@@ -17,14 +17,14 @@ const toCC = (value) => Math.floor(value * 127)
 
 // Chord progression: Am - F - C - G (in C major)
 const chords = {
-  Am: Tonal.Chord.get('Am').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('A4')]),
-  F:  Tonal.Chord.get('F').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('F4')]),
-  C:  Tonal.Chord.get('C').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('C4')]),
-  G:  Tonal.Chord.get('G').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('G4')])
+  Am: tonal.chord('Am', 3).concat([tonal.midi('A4')]),
+  F:  tonal.chord('F', 3).concat([tonal.midi('F4')]),
+  C:  tonal.chord('C', 3).concat([tonal.midi('C4')]),
+  G:  tonal.chord('G', 3).concat([tonal.midi('G4')])
 }
 
 // Melody notes (C major scale, higher octave)
-const melodyNotes = Tonal.Scale.get('C5 major').notes.map(note => Tonal.Note.midi(note))
+const melodyNotes = tonal.scale('C5 major')
 
 // ============================================================================
 // INITIALIZATION: Reset CC values to known starting points
@@ -183,11 +183,11 @@ const climaxChords = track('climax-chords',
 
 const climaxArp = track('climax-arp',
   arp([
-    Tonal.Note.midi('A3'),
-    Tonal.Note.midi('C4'), 
-    Tonal.Note.midi('E4'),
-    Tonal.Note.midi('A4'),
-    Tonal.Note.midi('C5')
+    tonal.midi('A3'),
+    tonal.midi('C4'), 
+    tonal.midi('E4'),
+    tonal.midi('A4'),
+    tonal.midi('C5')
   ], 'xxxxxxxxxxxxxxxx', {
     direction: 'updown',
     velocity: 75,
@@ -199,14 +199,14 @@ const climaxArp = track('climax-arp',
 const climaxMelody = track('climax-melody',
   pattern('x---x---x-x-x---').play((state) => {
     const melodySequence = [
-      Tonal.Note.midi('G4'),
-      Tonal.Note.midi('A4'),
-      Tonal.Note.midi('C5'),
-      Tonal.Note.midi('A4'),
-      Tonal.Note.midi('G4'),
-      Tonal.Note.midi('E4'),
-      Tonal.Note.midi('D4'),
-      Tonal.Note.midi('C4')
+      tonal.midi('G4'),
+      tonal.midi('A4'),
+      tonal.midi('C5'),
+      tonal.midi('A4'),
+      tonal.midi('G4'),
+      tonal.midi('E4'),
+      tonal.midi('D4'),
+      tonal.midi('C4')
     ]
     const melodyIndex = Math.floor((state.bar * 4 + state.beat) / 2) % melodySequence.length
     return midi.note(melodySequence[melodyIndex], {
