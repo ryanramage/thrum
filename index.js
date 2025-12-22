@@ -59,8 +59,33 @@ module.exports = {
   // Convenience exports from shortcuts for easier access
   arp: shortcuts.arp,
   chordProgression: shortcuts.chordProgression,
+  bassline: shortcuts.bassline,
   ccAt: shortcuts.ccAt,
   ccRamp: shortcuts.ccRamp,
   ccLFO: shortcuts.ccLFO,
-  ccCurve: shortcuts.ccCurve
+  ccCurve: shortcuts.ccCurve,
+  
+  // Drum shortcuts
+  kick: shortcuts.kick,
+  snare: shortcuts.snare,
+  clap: shortcuts.clap,
+  closedHat: shortcuts.closedHat,
+  openHat: shortcuts.openHat,
+  crash: shortcuts.crash,
+  ride: shortcuts.ride,
+  rimshot: shortcuts.rimshot,
+  
+  // Genre patterns
+  fourOnFloor: shortcuts.fourOnFloor,
+  house: shortcuts.house,
+  techno: shortcuts.techno,
+  breakbeat: shortcuts.breakbeat,
+  dnb: shortcuts.dnb,
+  trap: shortcuts.trap,
+  reggaeton: shortcuts.reggaeton,
+  
+  // Utilities
+  createDrumMap: shortcuts.createDrumMap,
+  DEFAULT_DRUM_MAP: shortcuts.DEFAULT_DRUM_MAP,
+  combineTracks: shortcuts.combineTracks
 }
