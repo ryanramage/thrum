@@ -115,6 +115,9 @@ function midiDump() {
     }
     console.log('')
   })
+
+  // Keep the process alive to listen for MIDI messages
+  process.stdin.resume()
 }
 
 // Handle graceful shutdown
