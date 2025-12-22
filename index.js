@@ -8,6 +8,10 @@ const simulator = require('./lib/simulator')
 const { State } = require('./lib/state')
 const shortcuts = require('./lib/shortcuts')
 
+// External dependencies
+const Tonal = require('@tonaljs/tonal')
+const JZZ = require('jzz')
+
 module.exports = {
   song,
   pattern,
@@ -20,6 +24,10 @@ module.exports = {
   simulator,
   State,
   shortcuts,
+  
+  // External dependencies
+  Tonal,
+  JZZ,
   
   // Convenience exports from shortcuts for easier access
   arp: shortcuts.arp,
