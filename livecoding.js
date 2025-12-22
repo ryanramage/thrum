@@ -122,9 +122,16 @@ function initMIDI() {
     console.log('MIDI: No output configured (will not send MIDI)')
   }
   
-  const midiIn = JZZ().openMidiIn(selectedInput)
+  const midiIn = JZZ().openMidiIn(selectedInput).or(function() {
+    console.error('MIDI: Failed to open input:', selectedInput)
+    process.exit(1)
+  })
+  
   if (selectedOutput) {
-    midiOut = JZZ().openMidiOut(selectedOutput)
+    midiOut = JZZ().openMidiOut(selectedOutput).or(function() {
+      console.error('MIDI: Failed to open output:', selectedOutput)
+      process.exit(1)
+    })
   }
   
   console.log('MIDI: Input opened successfully')
@@ -135,45 +142,52 @@ function initMIDI() {
   let spp = 0 // Song position in ticks
   let lastLoggedBeat = -1
   
-  midiIn.connect(function(msg) {
-    switch (msg[0]) {
-      case 0xF8: // Clock tick
-        spp++
-        onClockTick(spp)
-        
-        // Log every beat for debugging
-        const currentBeat = Math.floor(spp / 24)
-        if (currentBeat !== lastLoggedBeat) {
-          console.log('Beat:', currentBeat, 'Bar:', Math.floor(currentBeat / 4))
-          lastLoggedBeat = currentBeat
-        }
-        break
-      case 0xFA: // Start
-        console.log('MIDI: Start received')
-        spp = 0
-        lastLoggedBeat = -1
-        break
-      case 0xFB: // Continue
-        console.log('MIDI: Continue received')
-        break
-      case 0xFC: // Stop
-        console.log('MIDI: Stop received')
-        // Send all notes off
-        if (midiOut) {
-          for (let i = 0; i < 16; i++) {
-            midiOut.send([0xB0 + i, 123, 0]) // All Notes Off
-            midiOut.send([0xB0 + i, 120, 0]) // All Sound Off
+  // Add a small delay to ensure MIDI port is ready
+  setTimeout(function() {
+    console.log('MIDI: Setting up message handler...')
+    midiIn.connect(function(msg) {
+      console.log('MIDI: Received message:', msg) // Debug logging
+      switch (msg[0]) {
+        case 0xF8: // Clock tick
+          spp++
+          onClockTick(spp)
+          
+          // Log every beat for debugging
+          const currentBeat = Math.floor(spp / 24)
+          if (currentBeat !== lastLoggedBeat) {
+            console.log('Beat:', currentBeat, 'Bar:', Math.floor(currentBeat / 4))
+            lastLoggedBeat = currentBeat
           }
-        }
-        break
-      case 0xF2: // Song Position Pointer
-        const songPosition = (msg[2] << 7) + msg[1]
-        spp = songPosition * 6
-        lastLoggedBeat = -1
-        console.log('MIDI: SPP received:', spp, 'ticks')
-        break
-    }
-  })
+          break
+        case 0xFA: // Start
+          console.log('MIDI: Start received')
+          spp = 0
+          lastLoggedBeat = -1
+          break
+        case 0xFB: // Continue
+          console.log('MIDI: Continue received')
+          break
+        case 0xFC: // Stop
+          console.log('MIDI: Stop received')
+          // Send all notes off
+          if (midiOut) {
+            for (let i = 0; i < 16; i++) {
+              midiOut.send([0xB0 + i, 123, 0]) // All Notes Off
+              midiOut.send([0xB0 + i, 120, 0]) // All Sound Off
+            }
+          }
+          break
+        case 0xF2: // Song Position Pointer
+          const songPosition = (msg[2] << 7) + msg[1]
+          spp = songPosition * 6
+          lastLoggedBeat = -1
+          console.log('MIDI: SPP received:', spp, 'ticks')
+          break
+      }
+    })
+    
+    console.log('MIDI: Message handler connected successfully')
+  }, 100) // 100ms delay
   
   console.log('MIDI: Ready and listening for clock messages')
   console.log('HTTP: Reload server running on port', config.port)
