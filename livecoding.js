@@ -242,6 +242,11 @@ function onClockTick(spp) {
         actions.forEach(function(singleAction) {
           if (!singleAction) return
           
+          // Skip result objects with actions array - these are not actual MIDI actions
+          if (singleAction.actions) {
+            return
+          }
+          
           // Handle different action types
           if (singleAction.type === 'note' || !singleAction.type) {
             const channel = singleAction.channel !== undefined ? singleAction.channel : 0
