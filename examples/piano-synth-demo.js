@@ -1,4 +1,4 @@
-const { song, track, pattern, midi, arp, chordProgression, ccRamp, ccLFO, ccCurve, arrangement } = require('../index')
+const { song, track, pattern, midi, arp, chordProgression, ccRamp, ccLFO, ccCurve, arrangement, Tonal } = require('../index')
 
 // ============================================================================
 // PIANO SYNTH COMPOSITION: "Luminescence"
@@ -17,14 +17,14 @@ const toCC = (value) => Math.floor(value * 127)
 
 // Chord progression: Am - F - C - G (in C major)
 const chords = {
-  Am: [57, 60, 64, 69],  // A3, C4, E4, A4
-  F:  [53, 57, 60, 65],  // F3, A3, C4, F4
-  C:  [48, 52, 55, 60],  // C3, E3, G3, C4
-  G:  [55, 59, 62, 67]   // G3, B3, D4, G4
+  Am: Tonal.Chord.get('Am').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('A4')]),
+  F:  Tonal.Chord.get('F').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('F4')]),
+  C:  Tonal.Chord.get('C').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('C4')]),
+  G:  Tonal.Chord.get('G').notes.map(note => Tonal.Note.midi(`${note}3`)).concat([Tonal.Note.midi('G4')])
 }
 
 // Melody notes (C major scale, higher octave)
-const melodyNotes = [72, 74, 76, 77, 79, 81, 83, 84] // C5 to C6
+const melodyNotes = Tonal.Scale.get('C5 major').notes.map(note => Tonal.Note.midi(note))
 
 // ============================================================================
 // INITIALIZATION: Reset CC values to known starting points
@@ -182,7 +182,13 @@ const climaxChords = track('climax-chords',
 )
 
 const climaxArp = track('climax-arp',
-  arp([57, 60, 64, 69, 72], 'xxxxxxxxxxxxxxxx', {
+  arp([
+    Tonal.Note.midi('A3'),
+    Tonal.Note.midi('C4'), 
+    Tonal.Note.midi('E4'),
+    Tonal.Note.midi('A4'),
+    Tonal.Note.midi('C5')
+  ], 'xxxxxxxxxxxxxxxx', {
     direction: 'updown',
     velocity: 75,
     length: 24,
@@ -192,7 +198,16 @@ const climaxArp = track('climax-arp',
 
 const climaxMelody = track('climax-melody',
   pattern('x---x---x-x-x---').play((state) => {
-    const melodySequence = [79, 81, 84, 81, 79, 76, 74, 72]
+    const melodySequence = [
+      Tonal.Note.midi('G4'),
+      Tonal.Note.midi('A4'),
+      Tonal.Note.midi('C5'),
+      Tonal.Note.midi('A4'),
+      Tonal.Note.midi('G4'),
+      Tonal.Note.midi('E4'),
+      Tonal.Note.midi('D4'),
+      Tonal.Note.midi('C4')
+    ]
     const melodyIndex = Math.floor((state.bar * 4 + state.beat) / 2) % melodySequence.length
     return midi.note(melodySequence[melodyIndex], {
       velocity: 90,
