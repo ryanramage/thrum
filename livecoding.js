@@ -227,31 +227,45 @@ function onClockTick(spp) {
     
     // Send MIDI messages
     if (result && result.actions && midiOut) {
-      result.actions.forEach(function(action) {
-        console.log(action)
-        // Handle different action types
-        if (action.type === 'note' || !action.type) {
-          const channel = action.channel !== undefined ? action.channel : 0
-          const velocity = action.velocity !== undefined ? action.velocity : 100
-          const note = action.note
-          const length = action.length !== undefined ? action.length : 24
-          
-          // Send note on
-          midiOut.send([0x90 + channel, note, velocity])
-          
-          // Calculate note off time in milliseconds
-          // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
-          const msPerTick = (60000 / tempo) / 24
-          const noteOffTime = length * msPerTick
-          
-          // Schedule note off
-          setTimeout(function() {
-            midiOut.send([0x80 + channel, note, 0])
-          }, noteOffTime)
-        } else if (action.type === 'cc') {
-          const channel = action.channel !== undefined ? action.channel : 0
-          midiOut.send([0xB0 + channel, action.controller, action.value])
+      result.actions.forEach(function(actionOrFunc) {
+        // If action is a function, call it with state to get the actual action
+        let action = actionOrFunc
+        if (typeof actionOrFunc === 'function') {
+          action = actionOrFunc(state)
         }
+        
+        console.log(action)
+        
+        // Handle array of actions (from chord function)
+        const actions = Array.isArray(action) ? action : [action]
+        
+        actions.forEach(function(singleAction) {
+          if (!singleAction) return
+          
+          // Handle different action types
+          if (singleAction.type === 'note' || !singleAction.type) {
+            const channel = singleAction.channel !== undefined ? singleAction.channel : 0
+            const velocity = singleAction.velocity !== undefined ? singleAction.velocity : 100
+            const note = singleAction.note
+            const length = singleAction.length !== undefined ? singleAction.length : 24
+            
+            // Send note on
+            midiOut.send([0x90 + channel, note, velocity])
+            
+            // Calculate note off time in milliseconds
+            // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
+            const msPerTick = (60000 / tempo) / 24
+            const noteOffTime = length * msPerTick
+            
+            // Schedule note off
+            setTimeout(function() {
+              midiOut.send([0x80 + channel, note, 0])
+            }, noteOffTime)
+          } else if (singleAction.type === 'cc') {
+            const channel = singleAction.channel !== undefined ? singleAction.channel : 0
+            midiOut.send([0xB0 + channel, singleAction.controller, singleAction.value])
+          }
+        })
       })
     }
   } catch (error) {
