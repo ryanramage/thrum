@@ -248,23 +248,29 @@ function onClockTick(spp) {
             const velocity = singleAction.velocity !== undefined ? singleAction.velocity : 100
             const note = singleAction.note
             const length = singleAction.length !== undefined ? singleAction.length : 24
-            
-            // Send note on
-            midiOut.send([0x90 + channel, note, velocity])
-            
-            // Calculate note off time in milliseconds
-            // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
-            const msPerTick = (60000 / tempo) / 24
-            const noteOffTime = length * msPerTick
-            
-            // Schedule note off
-            setTimeout(function() {
-              midiOut.send([0x80 + channel, note, 0])
-            }, noteOffTime)
-          } else if (singleAction.type === 'cc') {
-            const channel = singleAction.channel !== undefined ? singleAction.channel : 0
-            midiOut.send([0xB0 + channel, singleAction.controller, singleAction.value])
+          
+            try {
+              // Send note on
+              midiOut.send([0x90 + channel, note, velocity])
+              
+              // Calculate note off time in milliseconds
+              // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
+              const msPerTick = (60000 / tempo) / 24
+              const noteOffTime = length * msPerTick
+              
+              // Schedule note off
+              setTimeout(function() {
+                midiOut.send([0x80 + channel, note, 0])
+              }, noteOffTime)
+            } else if (singleAction.type === 'cc') {
+              const channel = singleAction.channel !== undefined ? singleAction.channel : 0
+              midiOut.send([0xB0 + channel, singleAction.controller, singleAction.value])
+            }
+          } catch (ee) {
+            console.log('midi note issue', channel, velocity, note, length)
+            console.log('full action', singleAction)
           }
+
         })
       })
     }
