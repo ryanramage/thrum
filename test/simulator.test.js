@@ -4,7 +4,6 @@ const song = require('../lib/song')
 const pattern = require('../lib/pattern')
 const midi = require('../lib/midi')
 const { State } = require('../lib/state')
-const { State } = require('../lib/state')
 
 test('simulator.create - creates a simulator with defaults', t => {
   const s = song.create([], { tempo: 120, meter: [4, 4] })
