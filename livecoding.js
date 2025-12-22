@@ -234,8 +234,6 @@ function onClockTick(spp) {
           action = actionOrFunc(state)
         }
         
-        console.log(action)
-        
         // Handle array of actions (from chord function)
         const actions = Array.isArray(action) ? action : [action]
         
@@ -253,22 +251,27 @@ function onClockTick(spp) {
             const velocity = singleAction.velocity !== undefined ? singleAction.velocity : 100
             const note = singleAction.note
             const length = singleAction.length !== undefined ? singleAction.length : 24
+            const delay = singleAction.delay !== undefined ? singleAction.delay : 0
           
             try {
-              // Send note on
-              midiOut.send([0x90 + channel, note, velocity])
-              
-              // Calculate note off time in milliseconds
-              // At 120 BPM: 1 beat = 500ms, 1 tick = 500/24 = ~20.83ms
+              // Calculate delay time in milliseconds
               const msPerTick = (60000 / tempo) / 24
-              const noteOffTime = length * msPerTick
+              const delayTime = delay * msPerTick
               
-              // Schedule note off
+              // Schedule note on with delay
               setTimeout(function() {
-                midiOut.send([0x80 + channel, note, 0])
-              }, noteOffTime)
+                midiOut.send([0x90 + channel, note, velocity])
+                
+                // Calculate note off time
+                const noteOffTime = length * msPerTick
+                
+                // Schedule note off
+                setTimeout(function() {
+                  midiOut.send([0x80 + channel, note, 0])
+                }, noteOffTime)
+              }, delayTime)
             } catch (ee) {
-              console.log('midi note issue', channel, velocity, note, length)
+              console.log('midi note issue', channel, velocity, note, length, delay)
               console.log('full action', singleAction)
             }
           } else if (singleAction.type === 'cc') {
