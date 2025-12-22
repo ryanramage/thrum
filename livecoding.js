@@ -9,6 +9,7 @@ const config = require('rc')('thrum', {
   inputs: {}
 })
 
+console.log(config)
 let currentSong = null
 let musicFilePath = null
 let midiOut = null
@@ -97,8 +98,10 @@ function initMIDI() {
   
   // Find input
   let selectedInput = config.in
+  console.log('selecting', selectedInput)
   if (!selectedInput) {
     const inputs = JZZ().info().inputs
+    console.log('jzz inputs', inputs)
     if (inputs && inputs.length) selectedInput = inputs[0].name
   }
   
@@ -146,18 +149,11 @@ function initMIDI() {
   setTimeout(function() {
     console.log('MIDI: Setting up message handler...')
     midiIn.connect(function(msg) {
-      console.log('MIDI: Received message:', msg) // Debug logging
       switch (msg[0]) {
         case 0xF8: // Clock tick
           spp++
           onClockTick(spp)
           
-          // Log every beat for debugging
-          const currentBeat = Math.floor(spp / 24)
-          if (currentBeat !== lastLoggedBeat) {
-            console.log('Beat:', currentBeat, 'Bar:', Math.floor(currentBeat / 4))
-            lastLoggedBeat = currentBeat
-          }
           break
         case 0xFA: // Start
           console.log('MIDI: Start received')
@@ -181,7 +177,6 @@ function initMIDI() {
           const songPosition = (msg[2] << 7) + msg[1]
           spp = songPosition * 6
           lastLoggedBeat = -1
-          console.log('MIDI: SPP received:', spp, 'ticks')
           break
       }
     })
@@ -233,6 +228,7 @@ function onClockTick(spp) {
     // Send MIDI messages
     if (result && result.actions && midiOut) {
       result.actions.forEach(function(action) {
+        console.log(action)
         // Handle different action types
         if (action.type === 'note' || !action.type) {
           const channel = action.channel !== undefined ? action.channel : 0
