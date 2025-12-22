@@ -64,7 +64,7 @@ const introTime = track('intro-time',
 )
 
 const introFX = track('intro-fx',
-  ccRamp(17, toCC(0.3), toCC(0.4), 4, {
+  ccRamp(17, toCC(0.3), toCC(1), 4, {
     channel: 0,
     resolution: 48,
     loop: false
@@ -127,7 +127,7 @@ const devResonance = track('dev-resonance',
 )
 
 const devTime = track('dev-time',
-  ccRamp(19, toCC(0.5), toCC(0.4), 4, {
+  ccRamp(19, toCC(0.5), toCC(1), 4, {
     channel: 0,
     resolution: 48,
     loop: false
