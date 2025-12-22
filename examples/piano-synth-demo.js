@@ -27,6 +27,27 @@ const chords = {
 const melodyNotes = [72, 74, 76, 77, 79, 81, 83, 84] // C5 to C6
 
 // ============================================================================
+// INITIALIZATION: Reset CC values to known starting points
+// ============================================================================
+
+const initCC = track('init-cc',
+  (state) => {
+    // Only send on the very first tick
+    if (state.absoluteTick === 0) {
+      return {
+        actions: [
+          midi.cc(18, toCC(0.2), { channel: 0 })(state), // Brightness
+          midi.cc(19, toCC(0.6), { channel: 0 })(state), // Time
+          midi.cc(16, toCC(0.1), { channel: 0 })(state), // Resonance
+          midi.cc(17, toCC(0.3), { channel: 0 })(state)  // FX
+        ]
+      }
+    }
+    return { actions: [] }
+  }
+)
+
+// ============================================================================
 // SECTION 1: INTRO (Bars 0-3) - Sparse, mysterious
 // ============================================================================
 
@@ -325,6 +346,7 @@ const composition = arrangement([
 // ============================================================================
 
 module.exports = song.create([
+  initCC,
   track('composition', composition)
 ], {
   tempo: 85,

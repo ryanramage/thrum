@@ -41,6 +41,30 @@ const chords = {
 }
 
 // ============================================================================
+// INITIALIZATION: Reset CC values to known starting points
+// ============================================================================
+
+const initCC = track('init-cc',
+  (state) => {
+    // Only send on the very first tick
+    if (state.absoluteTick === 0) {
+      return {
+        actions: [
+          midi.cc(71, toCC(0.2), { channel: 0 })(state), // Resonance
+          midi.cc(74, toCC(0.1), { channel: 0 })(state), // Brightness
+          midi.cc(80, toCC(0.7), { channel: 0 })(state), // Decay
+          midi.cc(81, toCC(0.8), { channel: 0 })(state), // Sustain
+          midi.cc(82, toCC(0.75), { channel: 0 })(state), // Release
+          midi.cc(91, toCC(0.5), { channel: 0 })(state), // Reverb
+          midi.cc(93, toCC(0.1), { channel: 0 })(state)  // Chorus
+        ]
+      }
+    }
+    return { actions: [] }
+  }
+)
+
+// ============================================================================
 // SECTION 1: EMERGENCE (Bars 0-15) - Very slow fade in
 // ============================================================================
 
@@ -506,6 +530,7 @@ const composition = arrangement([
 // ============================================================================
 
 module.exports = song.create([
+  initCC,
   track('composition', composition)
 ], {
   tempo: 60, // Very slow tempo for ambient feel
