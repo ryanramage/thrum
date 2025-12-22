@@ -19,5 +19,13 @@ module.exports = {
   arrangement,
   simulator,
   State,
-  shortcuts
+  shortcuts,
+  
+  // Convenience exports from shortcuts for easier access
+  arp: shortcuts.arp,
+  chordProgression: shortcuts.chordProgression,
+  ccAt: shortcuts.ccAt,
+  ccRamp: shortcuts.ccRamp,
+  ccLFO: shortcuts.ccLFO,
+  ccCurve: shortcuts.ccCurve
 }
