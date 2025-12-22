@@ -262,13 +262,13 @@ function onClockTick(spp) {
               setTimeout(function() {
                 midiOut.send([0x80 + channel, note, 0])
               }, noteOffTime)
-            } else if (singleAction.type === 'cc') {
-              const channel = singleAction.channel !== undefined ? singleAction.channel : 0
-              midiOut.send([0xB0 + channel, singleAction.controller, singleAction.value])
+            } catch (ee) {
+              console.log('midi note issue', channel, velocity, note, length)
+              console.log('full action', singleAction)
             }
-          } catch (ee) {
-            console.log('midi note issue', channel, velocity, note, length)
-            console.log('full action', singleAction)
+          } else if (singleAction.type === 'cc') {
+            const channel = singleAction.channel !== undefined ? singleAction.channel : 0
+            midiOut.send([0xB0 + channel, singleAction.controller, singleAction.value])
           }
 
         })
