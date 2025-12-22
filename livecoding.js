@@ -3,6 +3,7 @@ const JZZ = require('jzz')
 const fs = require('fs')
 const path = require('path')
 const http = require('http')
+const { State } = require('./lib/state')
 const config = require('rc')('thrum', {
   port: 5551,
   inputs: {}
@@ -19,9 +20,10 @@ function loadMusicFile(filePath) {
     const resolvedPath = require.resolve(path.resolve(filePath))
     delete require.cache[resolvedPath]
     
-    // Also clear cache for any thrum modules that might be cached
+    // Clear cache for local modules (more reliable approach)
+    const projectRoot = process.cwd()
     Object.keys(require.cache).forEach(key => {
-      if (key.includes('thrum') && !key.includes('node_modules')) {
+      if (key.startsWith(projectRoot) && !key.includes('node_modules')) {
         delete require.cache[key]
       }
     })
@@ -31,7 +33,7 @@ function loadMusicFile(filePath) {
     currentSong = musicModule
     
     // Update tempo if song provides it
-    if (currentSong.tempo) {
+    if (currentSong && currentSong.tempo) {
       tempo = currentSong.tempo
       console.log('Updated tempo to:', tempo)
     }
@@ -195,21 +197,37 @@ function onClockTick(spp) {
   const beat = Math.floor(spp / 24) % 4
   const bar = Math.floor(spp / 96)
   
-  const state = {
+  // Create proper State object
+  const state = new State({
     tick,
     beat,
     bar,
     absoluteTick: spp
-  }
+  })
   
   try {
-    // Execute the song
-    const result = currentSong.tick ? currentSong.tick(state) : null
+    // Execute the song - handle different song structures
+    let result = null
+    
+    if (typeof currentSong === 'function') {
+      // Direct function
+      result = currentSong(state)
+    } else if (currentSong && typeof currentSong.tick === 'function') {
+      // Object with tick method
+      result = currentSong.tick(state)
+    } else if (currentSong && currentSong.default && typeof currentSong.default === 'function') {
+      // ES6 module with default export
+      result = currentSong.default(state)
+    } else if (currentSong && currentSong.default && typeof currentSong.default.tick === 'function') {
+      // ES6 module with default export object
+      result = currentSong.default.tick(state)
+    }
     
     // Send MIDI messages
     if (result && result.actions && midiOut) {
       result.actions.forEach(function(action) {
-        if (action.type === 'note') {
+        // Handle different action types
+        if (action.type === 'note' || !action.type) {
           const channel = action.channel !== undefined ? action.channel : 0
           const velocity = action.velocity !== undefined ? action.velocity : 100
           const note = action.note
@@ -227,6 +245,9 @@ function onClockTick(spp) {
           setTimeout(function() {
             midiOut.send([0x80 + channel, note, 0])
           }, noteOffTime)
+        } else if (action.type === 'cc') {
+          const channel = action.channel !== undefined ? action.channel : 0
+          midiOut.send([0xB0 + channel, action.controller, action.value])
         }
       })
     }
