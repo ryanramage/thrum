@@ -3,6 +3,7 @@ const JZZ = require('jzz')
 const config = require('rc')('thrum', {
   inputs: {}
 })
+console.log(config)
 
 function usage() {
   console.log('Usage: node midi-dump.js')
