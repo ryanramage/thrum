@@ -213,6 +213,11 @@ function onClockTick(spp) {
   const beat = Math.floor(spp / 24) % 4
   const bar = Math.floor(spp / 96)
   
+  // Log beat position (only on beat 0 of each bar to avoid spam)
+  if (beat === 0 && tick === 0) {
+    console.log(`♫ Bar ${bar + 1}`)
+  }
+  
   // Create proper State object
   const state = new State({
     tick,
