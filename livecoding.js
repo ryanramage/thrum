@@ -28,12 +28,19 @@ function loadMusicFile(filePath) {
       }
     })
     
-    // Load the music file
+    // Load the music file - expect it to export a song object
     const musicModule = require(path.resolve(filePath))
-    currentSong = musicModule
+    
+    // Support both direct export and default export
+    currentSong = musicModule.default || musicModule
+    
+    // Validate that we have a proper song object
+    if (!currentSong || typeof currentSong.tick !== 'function') {
+      throw new Error('Music file must export a song object with a tick() method. Use song.create() to create songs.')
+    }
     
     // Update tempo if song provides it
-    if (currentSong && currentSong.tempo) {
+    if (currentSong.tempo) {
       tempo = currentSong.tempo
       console.log('Updated tempo to:', tempo)
     }
@@ -206,22 +213,8 @@ function onClockTick(spp) {
   })
   
   try {
-    // Execute the song - handle different song structures
-    let result = null
-    
-    if (typeof currentSong === 'function') {
-      // Direct function
-      result = currentSong(state)
-    } else if (currentSong && typeof currentSong.tick === 'function') {
-      // Object with tick method
-      result = currentSong.tick(state)
-    } else if (currentSong && currentSong.default && typeof currentSong.default === 'function') {
-      // ES6 module with default export
-      result = currentSong.default(state)
-    } else if (currentSong && currentSong.default && typeof currentSong.default.tick === 'function') {
-      // ES6 module with default export object
-      result = currentSong.default.tick(state)
-    }
+    // Execute the song - only support song objects with tick method
+    const result = currentSong.tick(state)
     
     // Send MIDI messages
     if (result && result.actions && midiOut) {
