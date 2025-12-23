@@ -14,6 +14,7 @@ let currentSong = null
 let musicFilePath = null
 let midiOut = null
 let tempo = 120 // Default tempo, can be overridden by song
+let lastLoggedBar = -1
 
 function loadMusicFile(filePath) {
   try {
@@ -143,48 +144,51 @@ function initMIDI() {
   }
   
   let spp = 0 // Song position in ticks
-  let lastLoggedBar = -1
   
   // Add a small delay to ensure MIDI port is ready
   setTimeout(function() {
     console.log('MIDI: Setting up message handler...')
     midiIn.connect(function(msg) {
-      switch (msg[0]) {
-        case 0xF8: // Clock tick
-          spp++
-          onClockTick(spp)
-          
-          break
-        case 0xFA: // Start
-          console.log('MIDI: Start received')
-          spp = 0
-          lastLoggedBar = -1
-          console.log('♫ Bar 1')
-          lastLoggedBar = 0
-          break
-        case 0xFB: // Continue
-          console.log('MIDI: Continue received')
-          break
-        case 0xFC: // Stop
-          console.log('MIDI: Stop received')
-          // Send all notes off
-          if (midiOut) {
-            for (let i = 0; i < 16; i++) {
-              midiOut.send([0xB0 + i, 123, 0]) // All Notes Off
-              midiOut.send([0xB0 + i, 120, 0]) // All Sound Off
+      try {
+        switch (msg[0]) {
+          case 0xF8: // Clock tick
+            spp++
+            onClockTick(spp)
+            
+            break
+          case 0xFA: // Start
+            console.log('MIDI: Start received')
+            spp = 0
+            lastLoggedBar = -1
+            console.log('♫ Bar 1')
+            lastLoggedBar = 0
+            break
+          case 0xFB: // Continue
+            console.log('MIDI: Continue received')
+            break
+          case 0xFC: // Stop
+            console.log('MIDI: Stop received')
+            // Send all notes off
+            if (midiOut) {
+              for (let i = 0; i < 16; i++) {
+                midiOut.send([0xB0 + i, 123, 0]) // All Notes Off
+                midiOut.send([0xB0 + i, 120, 0]) // All Sound Off
+              }
             }
-          }
-          break
-        case 0xF2: // Song Position Pointer
-          const songPosition = (msg[2] << 7) + msg[1]
-          spp = songPosition * 6
-          // Log the current bar when position changes
-          const bar = Math.floor(spp / 96)
-          if (bar !== lastLoggedBar) {
-            console.log(`♫ Bar ${bar + 1}`)
-            lastLoggedBar = bar
-          }
-          break
+            break
+          case 0xF2: // Song Position Pointer
+            const songPosition = (msg[2] << 7) + msg[1]
+            spp = songPosition * 6
+            // Log the current bar when position changes
+            const bar = Math.floor(spp / 96)
+            if (bar !== lastLoggedBar) {
+              console.log(`♫ Bar ${bar + 1}`)
+              lastLoggedBar = bar
+            }
+            break
+        }
+      } catch (error) {
+        console.error('MIDI callback error:', error.message)
       }
     })
     
