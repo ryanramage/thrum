@@ -2,639 +2,754 @@
 
 A modern, functional music sequencer for live coding and algorithmic composition.
 
-Thrum provides a clean, composable API for creating MIDI sequences using patterns, tracks, and arrangements. Built with functional programming principles, it's designed for both live performance and studio production.
+Thrum lets you create music with code using simple patterns, tracks, and arrangements. Perfect for live performance, studio production, and learning about music programming.
 
-## Features
+## What You'll Learn
 
-- **Pattern-based sequencing** - Create rhythms with simple string notation
-- **Named tracks** - Organize your music with labeled tracks and groups
-- **Arrangements** - Structure songs with intro, verse, chorus sections
-- **Immutable state** - Predictable, testable music generation
-- **Simulator** - Test and visualize patterns without MIDI hardware
-- **Live coding friendly** - Hot reload your music as you code
+This guide will teach you how to:
+1. Set up Thrum and connect it to a synthesizer
+2. Create your first drum pattern
+3. Build a complete drum beat
+4. Add melodies and chords
+5. Control synthesizer parameters with CC automation
+6. Structure a full composition with multiple sections
+
+By the end, you'll be able to create complete pieces like the example songs included with Thrum.
 
 ## Installation
 
-```bash
-npm install thrum
-```
+First, install Node.js if you haven't already (download from [nodejs.org](https://nodejs.org)).
 
-Or install globally for the CLI:
+Then install Thrum globally:
 
 ```bash
 npm install -g thrum
 ```
 
-## Quick Start
+## Setup: Connecting to a Synthesizer
 
-### Basic Pattern
-
-Create a simple kick drum pattern:
-
-```javascript
-const { pattern, midi, song, simulator } = require('thrum/lib')
-
-// Create a pattern that plays on beats 1 and 3
-const kick = pattern.pattern('x---x---').play(
-  midi.note('C2', { channel: 9 })
-)
-
-// Create a song with the pattern
-const mySong = song.create([kick], { tempo: 120 })
-
-// Simulate it (no MIDI hardware needed)
-const sim = simulator.create(mySong)
-const results = sim.run(4) // Run for 4 bars
-
-console.log(`Generated ${results.length} events`)
-console.log(sim.visualize(4)) // ASCII visualization
-```
-
-### Multiple Tracks
-
-Build a drum beat with multiple patterns:
-
-```javascript
-const { pattern, midi, song, simulator } = require('thrum/lib')
-
-// Kick on 1 and 3
-const kick = pattern.pattern('x---x---').play(
-  midi.note('C2', { channel: 9 })
-)
-
-// Snare on 2 and 4
-const snare = pattern.pattern('----x-------x---').play(
-  midi.note('D2', { channel: 9 })
-)
-
-// Hi-hat on every 8th note
-const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(
-  midi.note('F#2', { channel: 9, velocity: 80 })
-)
-
-const mySong = song.create([kick, snare, hihat], { tempo: 120 })
-const sim = simulator.create(mySong)
-
-console.log(sim.visualize(4))
-```
-
-## Core Concepts
-
-### Patterns
-
-Patterns define when notes play using a simple string notation:
-
-- `x` = play a note
-- `-` = rest (silence)
-
-```javascript
-const { pattern, midi } = require('thrum/lib')
-
-// Quarter notes on beats 1 and 3
-pattern.pattern('x---x---').play(midi.note('C4'))
-
-// 16th note hi-hats
-pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2'))
-
-// Euclidean rhythm: 3 hits distributed over 8 steps
-pattern.euclidean(3, 8).play(midi.note('C4'))
-```
-
-**Pattern Resolution:**
-- 4 characters = quarter note resolution (24 ticks per character)
-- 16 characters = 16th note resolution (6 ticks per character)
-
-### MIDI Functions
-
-MIDI functions define what happens when a pattern triggers:
-
-```javascript
-const { midi } = require('thrum/lib')
-
-// Single note
-midi.note('C4')
-midi.note('C4', { velocity: 80, length: 12, channel: 0 })
-
-// Chord (multiple notes at once)
-midi.chord(['C4', 'E4', 'G4'])
-midi.chord(['C4', 'E4', 'G4'], { spread: 3 }) // Strum with 3 tick delay
-
-// Control Change
-midi.cc(16, 64) // Controller 16, value 64
-midi.cc(16, 64, { channel: 1 })
-```
-
-### Named Tracks
-
-Organize your music with named tracks:
-
-```javascript
-const { track, pattern, midi } = require('thrum/lib')
-
-const kick = track('kick',
-  pattern.pattern('x---x---').play(midi.note('C2'))
-)
-
-const snare = track('snare',
-  pattern.pattern('----x---').play(midi.note('D2'))
-)
-
-// Mute/unmute tracks
-kick.mute()
-kick.unmute()
-kick.toggleMute()
-
-// Override MIDI channel
-kick.setChannel(9)
-```
-
-### Track Groups
-
-Group related tracks together:
-
-```javascript
-const { track, group, pattern, midi } = require('thrum/lib')
-
-const kick = track('kick', pattern.pattern('x---').play(midi.note('C2')))
-const snare = track('snare', pattern.pattern('----x---').play(midi.note('D2')))
-const hihat = track('hihat', pattern.pattern('x-x-x-x-').play(midi.note('F#2')))
-
-const drums = group('drums', [kick, snare, hihat])
-
-// Control the entire group
-drums.mute()
-drums.unmute()
-
-// Control individual tracks
-drums.muteTrack('hihat')
-drums.soloTrack('kick')
-drums.unsoloAll()
-```
-
-### Arrangements
-
-Structure your song with sections:
-
-```javascript
-const { arrangement, track, pattern, midi } = require('thrum/lib')
-
-// Define tracks for each section
-const introKick = track('intro-kick',
-  pattern.pattern('x-------').play(midi.note('C2'))
-)
-
-const verseKick = track('verse-kick',
-  pattern.pattern('x---x---').play(midi.note('C2'))
-)
-
-const verseBass = track('verse-bass',
-  pattern.pattern('x-x-x-x-').play(midi.note('C1'))
-)
-
-const chorusDrums = group('chorus-drums', [
-  track('chorus-kick', pattern.pattern('x---x---x---x---').play(midi.note('C2'))),
-  track('chorus-snare', pattern.pattern('----x-------x---').play(midi.note('D2'))),
-  track('chorus-hihat', pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2')))
-])
-
-// Create the arrangement
-const mySong = arrangement([
-  [2, 'intro', [introKick]],
-  [4, 'verse', [verseKick, verseBass]],
-  [4, 'chorus', chorusDrums],
-  [2, 'outro', [introKick]]
-])
-
-// Section info is available in state
-const dynamicTrack = (state) => {
-  console.log(state.get('section'))      // 'verse', 'chorus', etc.
-  console.log(state.get('sectionBar'))   // Bar within current section
-  console.log(state.get('absoluteBar'))  // Absolute bar number
-  return { actions: [] }
-}
-```
-
-### State Management
-
-Thrum uses an immutable State object with helpful methods:
-
-```javascript
-const { State } = require('thrum/lib/state')
-
-// Create state
-const state = State.from(0, 0, 0) // bar 0, beat 0, tick 0
-const state2 = State.fromTick(96) // from absolute tick number
-
-// Query state
-state.isFirstBeatOfBar()  // true if bar start
-state.isBeat(2)           // true if on beat 2
-state.isBar(0)            // true if on bar 0
-state.positionInBar()     // 0-95 for 4/4 time
-state.position()          // "1.1.0" (human readable)
-
-// User state for counters, flags, etc.
-const state3 = state.withUserState({ counter: 5, mode: 'verse' })
-state3.get('counter')     // 5
-state3.get('missing', 0)  // 0 (default value)
-
-// State is immutable
-state.bar = 5  // throws error
-```
-
-Use state in custom tracks:
-
-```javascript
-const customTrack = (state) => {
-  // Play different notes based on bar number
-  if (state.bar % 4 === 0) {
-    return { actions: [midi.note('C4')(state)] }
-  } else {
-    return { actions: [midi.note('E4')(state)] }
-  }
-}
-
-// Or use state helpers
-const onDownbeat = (state) => {
-  if (state.isFirstBeatOfBar()) {
-    return { actions: [midi.note('C2')(state)] }
-  }
-  return { actions: [] }
-}
-```
-
-## Testing and Development
-
-### Simulator
-
-Test your music without MIDI hardware:
-
-```javascript
-const { simulator, song, pattern, midi } = require('thrum/lib')
-
-const kick = pattern.pattern('x---x---').play(midi.note('C2'))
-const mySong = song.create([kick], { tempo: 120 })
-
-const sim = simulator.create(mySong)
-
-// Run for N bars
-const results = sim.run(4)
-console.log(`Generated ${results.length} events`)
-
-// Get detailed timeline
-const timeline = sim.timeline(4)
-console.log(`Duration: ${timeline.metadata.durationSeconds}s`)
-console.log(`Tempo: ${timeline.metadata.tempo} BPM`)
-
-// Visualize the pattern
-console.log(sim.visualize(4))
-// Output:
-// Tempo: 120 BPM | Meter: 4/4 | Bars: 4
-// ────────────────────────────────────────────────────────────────────────────────
-// Bar 1: |x      ·      ·      · |·      ·      ·      · |x      ·      ·      · |·      ·      ·      · |
-// Bar 2: |x      ·      ·      · |·      ·      ·      · |x      ·      ·      · |·      ·      ·      · |
-// ...
-
-// Test a single tick
-const result = sim.tick(0)
-console.log(result.state)   // { bar: 0, beat: 0, tick: 0 }
-console.log(result.actions) // Array of MIDI actions
-```
-
-### Writing Tests
-
-Use the simulator in your tests:
-
-```javascript
-const test = require('tape')
-const { simulator, song, pattern, midi } = require('thrum/lib')
-
-test('kick pattern plays on beats 1 and 3', t => {
-  const kick = pattern.pattern('x---x---').play(midi.note('C2'))
-  const mySong = song.create([kick])
-  const sim = simulator.create(mySong)
-  
-  const results = sim.run(1)
-  
-  t.equal(results.length, 2, 'two kicks per bar')
-  t.equal(results[0].state.beat, 0, 'first kick on beat 1')
-  t.equal(results[1].state.beat, 2, 'second kick on beat 3')
-  
-  t.end()
-})
-```
-
-## Live Coding Setup
+Before we make music, we need to connect Thrum to something that makes sound.
 
 ### macOS Setup
 
-1. **Create IAC MIDI Bus:**
-   - Open Audio MIDI Setup
-   - Window → Show MIDI Studio
+1. **Create a virtual MIDI bus:**
+   - Open "Audio MIDI Setup" (in Applications/Utilities)
+   - Go to Window → Show MIDI Studio
    - Double-click "IAC Driver"
    - Check "Device is online"
-   - Create a bus named "IAC Driver Bus 1"
+   - You should see "IAC Driver Bus 1" in the list
 
-2. **Create Project:**
+2. **Connect a synthesizer:**
+   
+   You have several options:
+   
+   - **Web synth (easiest):** Open [Enfer](https://ryanramage.github.io/Enfer/) in your browser and select "IAC Driver Bus 1" as the MIDI input
+   - **DAW:** Open Ableton, Logic, or Reaper and create a MIDI track with input from "IAC Driver Bus 1"
+   - **Hardware synth:** Connect via a MIDI interface
+
+### Windows/Linux Setup
+
+On Windows and Linux, you'll need to set up a virtual MIDI port using software like loopMIDI (Windows) or similar tools. The process is similar - create a virtual port and connect your synthesizer to it.
+
+## Your First Pattern: A Single Kick Drum
+
+Let's start with the simplest possible pattern - a kick drum on beat 1.
+
+Create a new folder for your project:
 
 ```bash
-mkdir my-thrum-project
-cd my-thrum-project
-npm init -y
-npm install thrum
-touch .thrumrc
-touch music.js
+mkdir my-music
+cd my-music
 ```
 
-3. **Configure `.thrumrc`:**
+Create a file called `music.js`:
+
+```javascript
+const { pattern, midi, song } = require('thrum')
+
+// A kick drum that plays on beat 1
+const kick = pattern('x---').play(
+  midi.note('C2', { channel: 9 })
+)
+
+// Create a song with just this one pattern
+module.exports = song.create([kick], { tempo: 120 })
+```
+
+Let's break this down:
+
+- `pattern('x---')` creates a rhythm where `x` means "play" and `-` means "rest"
+- With 4 characters, each character represents one beat (quarter note)
+- `midi.note('C2', { channel: 9 })` plays note C2 on MIDI channel 9 (the standard drum channel)
+- `song.create([kick], { tempo: 120 })` creates a song at 120 BPM
+
+Now create a `.thrumrc` file to configure MIDI:
 
 ```json
 {
   "livecoding": true,
-  "inputs": {
-    "1": "IAC Driver Bus 1"
-  },
   "outputs": {
     "1": "IAC Driver Bus 1"
   }
 }
 ```
 
-4. **Create `music.js` using the new API:**
-
-```javascript
-const pattern = require('thrum/lib/pattern')
-const midi = require('thrum/lib/midi')
-const song = require('thrum/lib/song')
-
-// Create patterns
-const kick = pattern.pattern('x---x---x---x---').play(midi.note('C2', { channel: 9 }))
-const snare = pattern.pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
-const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2', { channel: 9 }))
-
-// Create and export the song
-const mySong = song.create([kick, snare, hihat], { tempo: 120 })
-
-module.exports = mySong
-```
-
-5. **Start Thrum:**
+Run it:
 
 ```bash
 thrum music.js
 ```
 
-Now edit `music.js` and save - your changes will hot reload!
+You should hear a kick drum on beat 1 of every bar! Press Ctrl+C to stop.
 
-6. **Connect a Synth:**
-   - Use a DAW (Reaper, Ableton, etc.) with MIDI input from "IAC Driver Bus 1"
-   - Or use a web synth like [Enfer](https://ryanramage.github.io/Enfer/)
+## Adding More Drums
 
-## Patterns and Best Practices
+Let's add a snare on beats 2 and 4:
 
-### Pattern Design
-
-**Start Simple:**
 ```javascript
-// Basic kick and snare
-const kick = pattern.pattern('x---x---').play(midi.note('C2'))
-const snare = pattern.pattern('----x-------x---').play(midi.note('D2'))
-```
+const { pattern, midi, song } = require('thrum')
 
-**Add Variation:**
-```javascript
-// Vary velocity for dynamics
-const hihat = pattern.pattern('x-x-x-x-x-x-x-x-').play(
-  midi.note('F#2', { velocity: 80 })
+const kick = pattern('x---x---').play(
+  midi.note('C2', { channel: 9 })
 )
 
-// Use euclidean rhythms for interesting patterns
-const perc = pattern.euclidean(5, 16).play(midi.note('G#2'))
+const snare = pattern('----x-------x---').play(
+  midi.note('D2', { channel: 9 })
+)
+
+module.exports = song.create([kick, snare], { tempo: 120 })
 ```
 
-**Layer Patterns:**
+Notice:
+- The kick pattern now has 8 characters, so it plays on beats 1 and 3
+- The snare pattern has 16 characters - this gives us 16th note resolution
+- We pass both patterns to `song.create()` as an array
+
+Save the file and Thrum will automatically reload with your changes!
+
+## A Complete Drum Beat
+
+Let's add hi-hats to complete our drum beat:
+
 ```javascript
-// Combine multiple patterns on the same instrument
-const bassLine = group('bass', [
-  track('bass-root', pattern.pattern('x-------').play(midi.note('C1'))),
-  track('bass-fifth', pattern.pattern('----x---').play(midi.note('G1'))),
-  track('bass-octave', pattern.pattern('------x-').play(midi.note('C2')))
+const { pattern, midi, song } = require('thrum')
+
+const kick = pattern('x---x---').play(
+  midi.note('C2', { channel: 9 })
+)
+
+const snare = pattern('----x-------x---').play(
+  midi.note('D2', { channel: 9 })
+)
+
+const hihat = pattern('x-x-x-x-x-x-x-x-').play(
+  midi.note('F#2', { channel: 9, velocity: 80 })
+)
+
+module.exports = song.create([kick, snare, hihat], { tempo: 120 })
+```
+
+The hi-hat plays on every 8th note (every other 16th note) with a velocity of 80 (slightly quieter than the default 100).
+
+## Using Named Tracks
+
+As your music gets more complex, it helps to name your tracks:
+
+```javascript
+const { track, pattern, midi, song } = require('thrum')
+
+const kick = track('kick',
+  pattern('x---x---').play(midi.note('C2', { channel: 9 }))
+)
+
+const snare = track('snare',
+  pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
+)
+
+const hihat = track('hihat',
+  pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2', { channel: 9, velocity: 80 }))
+)
+
+module.exports = song.create([kick, snare, hihat], { tempo: 120 })
+```
+
+Named tracks let you mute, solo, and organize your music better.
+
+## Adding a Bassline
+
+Let's add a simple bassline. Change the MIDI channel to 0 (a melodic channel):
+
+```javascript
+const { track, pattern, midi, song } = require('thrum')
+
+const kick = track('kick',
+  pattern('x---x---').play(midi.note('C2', { channel: 9 }))
+)
+
+const snare = track('snare',
+  pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
+)
+
+const hihat = track('hihat',
+  pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2', { channel: 9, velocity: 80 }))
+)
+
+const bass = track('bass',
+  pattern('x-x-x-x-').play(midi.note('C2', { channel: 0, length: 12 }))
+)
+
+module.exports = song.create([kick, snare, hihat, bass], { tempo: 120 })
+```
+
+The bass plays on every other 16th note on channel 0 (a melodic channel, not drums). The `length: 12` makes the notes shorter (12 ticks instead of the default 24).
+
+## Playing Different Notes
+
+Let's make the bassline more interesting by playing different notes:
+
+```javascript
+const bass = track('bass',
+  pattern('x-x-x-x-x-x-x-x-').play((state) => {
+    // Play different notes based on which beat we're on
+    const notes = ['C2', 'C2', 'G1', 'C2', 'C2', 'G1', 'A#1', 'G1']
+    const noteIndex = Math.floor((state.bar * 8 + state.beat * 2 + state.tick / 12) % 8)
+    
+    return midi.note(notes[noteIndex], { 
+      channel: 0, 
+      length: 12 
+    })(state)
+  })
+)
+```
+
+Instead of always playing the same note, we use a function that:
+- Takes the current `state` (which tells us where we are in the song)
+- Picks a note from an array based on our position
+- Returns the MIDI note to play
+
+This is a powerful pattern - you can use any logic you want to decide what to play!
+
+## Adding Chords
+
+Let's add some chords using the `tonal` helper to make music theory easier:
+
+```javascript
+const { track, pattern, midi, song, tonal } = require('thrum')
+
+// ... drum tracks ...
+
+const bass = track('bass',
+  pattern('x-x-x-x-x-x-x-x-').play((state) => {
+    const notes = ['C2', 'C2', 'G1', 'C2', 'C2', 'G1', 'A#1', 'G1']
+    const noteIndex = Math.floor((state.bar * 8 + state.beat * 2 + state.tick / 12) % 8)
+    return midi.note(notes[noteIndex], { channel: 0, length: 12 })(state)
+  })
+)
+
+const chords = track('chords',
+  pattern('x-------x-------').play((state) => {
+    // Play a C minor chord every 2 beats
+    const chordNotes = tonal.chord('Cm', 4) // C minor in octave 4
+    return midi.chord(chordNotes, {
+      channel: 1,
+      velocity: 60,
+      length: 48,
+      spread: 6 // Strum the chord with 6 ticks between notes
+    })(state)
+  })
+)
+
+module.exports = song.create([kick, snare, hihat, bass, chords], { tempo: 120 })
+```
+
+The `tonal.chord('Cm', 4)` helper gives us the MIDI note numbers for a C minor chord. The `midi.chord()` function plays all the notes, with a slight strum effect from `spread: 6`.
+
+## Controlling Synthesizer Parameters
+
+Most synthesizers respond to MIDI CC (Control Change) messages. Let's add a filter sweep:
+
+```javascript
+const { track, pattern, midi, song, tonal, ccRamp } = require('thrum')
+
+// ... all previous tracks ...
+
+const filterSweep = track('filter',
+  ccRamp(74, 20, 100, 4, {
+    channel: 1,
+    resolution: 24,
+    loop: true
+  })
+)
+
+module.exports = song.create([
+  kick, snare, hihat, bass, chords, filterSweep
+], { tempo: 120 })
+```
+
+This creates a filter sweep that:
+- Controls CC 74 (brightness/cutoff on many synths)
+- Ramps from value 20 to 100
+- Over 4 bars
+- Updates every 24 ticks (every beat)
+- Loops continuously
+
+CC 74 is a standard MIDI CC for filter cutoff, but different synths use different CC numbers. Check your synth's documentation!
+
+## Creating Sections
+
+Real songs have structure - intro, verse, chorus, etc. Let's organize our music into sections:
+
+```javascript
+const { track, pattern, midi, song, tonal, ccRamp, arrangement } = require('thrum')
+
+// INTRO: Just kick and hi-hat
+const introKick = track('intro-kick',
+  pattern('x-------').play(midi.note('C2', { channel: 9 }))
+)
+
+const introHihat = track('intro-hihat',
+  pattern('x-x-x-x-').play(midi.note('F#2', { channel: 9, velocity: 60 }))
+)
+
+// VERSE: Full drums and bass
+const verseKick = track('verse-kick',
+  pattern('x---x---').play(midi.note('C2', { channel: 9 }))
+)
+
+const verseSnare = track('verse-snare',
+  pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
+)
+
+const verseHihat = track('verse-hihat',
+  pattern('x-x-x-x-x-x-x-x-').play(midi.note('F#2', { channel: 9, velocity: 80 }))
+)
+
+const verseBass = track('verse-bass',
+  pattern('x-x-x-x-x-x-x-x-').play((state) => {
+    const notes = ['C2', 'C2', 'G1', 'C2', 'C2', 'G1', 'A#1', 'G1']
+    const noteIndex = Math.floor((state.bar * 8 + state.beat * 2 + state.tick / 12) % 8)
+    return midi.note(notes[noteIndex], { channel: 0, length: 12 })(state)
+  })
+)
+
+// CHORUS: Add chords
+const chorusKick = track('chorus-kick',
+  pattern('x---x---x---x---').play(midi.note('C2', { channel: 9 }))
+)
+
+const chorusSnare = track('chorus-snare',
+  pattern('----x-------x---').play(midi.note('D2', { channel: 9 }))
+)
+
+const chorusHihat = track('chorus-hihat',
+  pattern('xxxxxxxxxxxxxxxx').play(midi.note('F#2', { channel: 9, velocity: 90 }))
+)
+
+const chorusBass = track('chorus-bass',
+  pattern('x-x-x-x-x-x-x-x-').play((state) => {
+    const notes = ['C2', 'C2', 'G1', 'C2', 'C2', 'G1', 'A#1', 'G1']
+    const noteIndex = Math.floor((state.bar * 8 + state.beat * 2 + state.tick / 12) % 8)
+    return midi.note(notes[noteIndex], { channel: 0, length: 12 })(state)
+  })
+)
+
+const chorusChords = track('chorus-chords',
+  pattern('x-------x-------').play((state) => {
+    const chordNotes = tonal.chord('Cm', 4)
+    return midi.chord(chordNotes, {
+      channel: 1,
+      velocity: 70,
+      length: 48,
+      spread: 6
+    })(state)
+  })
+)
+
+// Create the arrangement
+const composition = arrangement([
+  [4, 'intro', [introKick, introHihat]],
+  [8, 'verse', [verseKick, verseSnare, verseHihat, verseBass]],
+  [8, 'chorus', [chorusKick, chorusSnare, chorusHihat, chorusBass, chorusChords]],
+  [4, 'outro', [introKick, introHihat]]
 ])
+
+module.exports = song.create([composition], { tempo: 120 })
 ```
 
-### Track Organization
+Each section is defined as `[bars, name, tracks]`:
+- `[4, 'intro', [introKick, introHihat]]` means "play these tracks for 4 bars"
+- Sections play in order: intro → verse → chorus → outro
 
-**Use Named Tracks:**
+## Adding CC Automation Per Section
+
+Let's add different filter sweeps for each section:
+
 ```javascript
-// Good: Easy to identify and control
-const kick = track('kick', ...)
-const snare = track('snare', ...)
+const { track, pattern, midi, song, tonal, ccRamp, arrangement } = require('thrum')
 
-// Not as good: Anonymous functions
-const track1 = (state) => { ... }
-const track2 = (state) => { ... }
-```
+// ... all the track definitions from above ...
 
-**Group Related Tracks:**
-```javascript
-const drums = group('drums', [kick, snare, hihat])
-const bass = group('bass', [bassRoot, bassFifth])
-const melody = group('melody', [lead, pad])
+// INTRO: Slow filter opening
+const introFilter = track('intro-filter',
+  ccRamp(74, 10, 40, 4, {
+    channel: 1,
+    resolution: 48,
+    loop: false
+  })
+)
 
-const mySong = song.create([drums, bass, melody])
-```
+// VERSE: Subtle filter movement
+const verseFilter = track('verse-filter',
+  ccRamp(74, 40, 60, 8, {
+    channel: 1,
+    resolution: 24,
+    loop: false
+  })
+)
 
-**Use Arrangements for Structure:**
-```javascript
-// Clear song structure
-const mySong = arrangement([
-  [4, 'intro', introTracks],
-  [8, 'verse1', verseTracks],
-  [8, 'chorus', chorusTracks],
-  [8, 'verse2', verseTracks],
-  [8, 'chorus', chorusTracks],
-  [4, 'outro', outroTracks]
+// CHORUS: Bright and open
+const chorusFilter = track('chorus-filter',
+  ccRamp(74, 80, 100, 8, {
+    channel: 1,
+    resolution: 24,
+    loop: false
+  })
+)
+
+// OUTRO: Closing down
+const outroFilter = track('outro-filter',
+  ccRamp(74, 60, 20, 4, {
+    channel: 1,
+    resolution: 48,
+    loop: false
+  })
+)
+
+// Update the arrangement to include filters
+const composition = arrangement([
+  [4, 'intro', [introKick, introHihat, introFilter]],
+  [8, 'verse', [verseKick, verseSnare, verseHihat, verseBass, verseFilter]],
+  [8, 'chorus', [chorusKick, chorusSnare, chorusHihat, chorusBass, chorusChords, chorusFilter]],
+  [4, 'outro', [introKick, introHihat, outroFilter]]
 ])
+
+module.exports = song.create([composition], { tempo: 120 })
 ```
 
-### State Management
+Now each section has its own filter automation that matches the energy of that section!
 
-**Use User State for Counters:**
+## Understanding CC Automation
+
+Thrum provides several ways to automate CC parameters:
+
+### ccRamp - Linear Sweep
+
 ```javascript
-const evolving = (state) => {
-  // Get counter from state, default to 0
-  const count = state.get('counter', 0)
-  
-  // Play different notes based on counter
-  const notes = ['C4', 'D4', 'E4', 'G4']
-  const note = notes[count % notes.length]
-  
-  // Update counter for next time
-  const newState = state.withUserState({ counter: count + 1 })
-  
-  return { actions: [midi.note(note)(state)] }
-}
-```
-
-**Query State for Conditional Logic:**
-```javascript
-const dynamic = (state) => {
-  // Different behavior per section
-  if (state.isFirstBeatOfBar()) {
-    return { actions: [midi.note('C2')(state)] }
-  }
-  
-  // Different behavior per bar
-  if (state.bar % 4 === 0) {
-    return { actions: [midi.note('C3')(state)] }
-  }
-  
-  return { actions: [] }
-}
-```
-
-### Performance Tips
-
-**Mute Tracks During Development:**
-```javascript
-// Mute drums while working on melody
-drums.mute()
-
-// Solo just the track you're working on
-melody.soloTrack('lead')
-```
-
-**Use the Simulator:**
-```javascript
-// Test patterns before sending to MIDI
-const sim = simulator.create(mySong)
-console.log(sim.visualize(4))
-
-// Verify timing
-const results = sim.run(1)
-results.forEach(r => {
-  console.log(`Tick ${r.tick}: ${r.actions.length} actions`)
+ccRamp(74, 20, 100, 4, {
+  channel: 1,
+  resolution: 24,
+  loop: true
 })
 ```
 
-**Hot Reload Workflow:**
-1. Start `thrum music.js`
-2. Edit patterns in your editor
-3. Save file
-4. Changes apply immediately
-5. Iterate quickly!
+- Smoothly ramps from value 20 to 100
+- Over 4 bars
+- Updates every 24 ticks (every beat)
+- Loops when it reaches the end
 
-## Advanced Patterns
-
-### Polyrhythms
+### ccLFO - Oscillating Movement
 
 ```javascript
-// 3 against 4
-const three = pattern.euclidean(3, 12).play(midi.note('C4'))
-const four = pattern.pattern('x---x---x---').play(midi.note('E4'))
+const { ccLFO } = require('thrum')
+
+const filterLFO = track('filter-lfo',
+  ccLFO(74, 4, 30, {
+    channel: 1,
+    center: 64,
+    resolution: 24,
+    waveform: 'sine'
+  })
+)
 ```
 
-### Probability
+- Oscillates CC 74 around center value 64
+- Rate of 4 bars per cycle
+- Depth of 30 (goes from 34 to 94)
+- Sine wave shape (also: 'triangle', 'square', 'saw')
+
+### ccCurve - Custom Shape
 
 ```javascript
-const probabilistic = (state) => {
-  // 50% chance to play
-  if (Math.random() > 0.5) {
-    return { actions: [midi.note('C4')(state)] }
-  }
-  return { actions: [] }
+const { ccCurve } = require('thrum')
+
+const filterCurve = track('filter-curve',
+  ccCurve(74, [20, 60, 80, 100, 80, 60, 40], 8, {
+    channel: 1,
+    resolution: 24,
+    loop: true
+  })
+)
+```
+
+- Moves through specific values: 20 → 60 → 80 → 100 → 80 → 60 → 40
+- Over 8 bars total
+- Smoothly interpolates between values
+
+## Common MIDI CC Numbers
+
+Different synthesizers use different CC numbers, but these are common standards:
+
+- **CC 1**: Modulation wheel
+- **CC 7**: Volume
+- **CC 10**: Pan
+- **CC 11**: Expression
+- **CC 16-19**: General purpose (often user-assignable)
+- **CC 71**: Resonance/Harmonic Content
+- **CC 74**: Brightness/Filter Cutoff
+- **CC 91**: Reverb Depth
+- **CC 93**: Chorus Depth
+
+Always check your synthesizer's documentation to see which CC numbers it responds to!
+
+## Testing Without MIDI Hardware
+
+You can test your patterns without any MIDI hardware using the simulator:
+
+```javascript
+const { simulator } = require('thrum')
+const mySong = require('./music.js')
+
+const sim = simulator.create(mySong)
+
+// Run for 4 bars and see what happens
+const results = sim.run(4)
+console.log(`Generated ${results.length} MIDI events`)
+
+// Visualize the patterns
+console.log(sim.visualize(4))
+```
+
+This will show you an ASCII visualization of your patterns, perfect for debugging!
+
+## Example: Building a Complete Ambient Piece
+
+Let's look at how the included `ambient-pad-demo.js` example is structured. This will show you how all these concepts come together.
+
+The piece has four sections:
+
+1. **Emergence (16 bars)**: Very slow fade-in with sparse chords
+2. **Drift (32 bars)**: Slow evolution with subtle harmonic layers
+3. **Expansion (32 bars)**: Richer harmonies and more movement
+4. **Dissolution (32 bars)**: Slow fade to silence
+
+Here's a simplified version showing the structure:
+
+```javascript
+const { song, track, pattern, midi, chordProgression, ccRamp, arrangement, tonal } = require('thrum')
+
+// Helper to convert 0-1 range to MIDI CC 0-127
+const toCC = (value) => Math.floor(value * 127)
+
+// Define chord voicings
+const chords = {
+  Cmaj9: tonal.chord('Cmaj9', 3),
+  Am11: tonal.chord('Am11', 3),
+  Fmaj7: tonal.chord('Fmaj7', 3),
+  Gsus2: tonal.chord('Gsus2', 3)
 }
+
+// SECTION 1: EMERGENCE
+const emergenceChords = track('emergence-chords',
+  chordProgression([chords.Cmaj9, chords.Am11, chords.Fmaj7, chords.Gsus2], {
+    barsPerChord: 4,
+    velocity: 40,
+    length: 384, // Very long notes (4 bars)
+    channel: 0,
+    spread: 48 // Very slow strum
+  })
+)
+
+const emergenceBrightness = track('emergence-brightness',
+  ccRamp(74, toCC(0.1), toCC(0.35), 16, {
+    channel: 0,
+    resolution: 96, // Update every bar
+    loop: false
+  })
+)
+
+// SECTION 2: DRIFT
+const driftChords = track('drift-chords',
+  chordProgression([chords.Cmaj9, chords.Am11, chords.Fmaj7, chords.Gsus2], {
+    barsPerChord: 4,
+    velocity: 50,
+    length: 384,
+    channel: 0,
+    spread: 36
+  })
+)
+
+const driftBrightness = track('drift-brightness',
+  ccLFO(74, 16, 25, {
+    channel: 0,
+    center: toCC(0.45),
+    resolution: 96,
+    waveform: 'sine'
+  })
+)
+
+// Create the arrangement
+const composition = arrangement([
+  [16, 'emergence', [emergenceChords, emergenceBrightness]],
+  [32, 'drift', [driftChords, driftBrightness]]
+  // ... more sections ...
+])
+
+module.exports = song.create([composition], {
+  tempo: 60, // Very slow for ambient
+  meter: [4, 4]
+})
 ```
 
-### Generative Sequences
+Key techniques used:
+
+- **Very long note lengths** (384 ticks = 4 bars) for sustained pads
+- **Slow CC ramps** (16-32 bars) for gradual evolution
+- **Low velocities** (40-60) for gentle, ambient sound
+- **Wide chord spreads** (36-48 ticks) for harp-like strumming
+- **Slow tempo** (60 BPM) for meditative feel
+
+## Example: Building a Funky Bass Piece
+
+The `funky-bass-demo.js` example shows a different approach - rhythmic, energetic, with lots of CC modulation:
 
 ```javascript
-const generative = (state) => {
-  const scale = ['C4', 'D4', 'E4', 'G4', 'A4']
-  const index = state.bar % scale.length
-  
-  if (state.isFirstBeatOfBar()) {
-    return { actions: [midi.note(scale[index])(state)] }
-  }
-  
-  return { actions: [] }
-}
+const { song, track, pattern, midi, bassline, ccLFO, ccRamp, arrangement, tonal } = require('thrum')
+
+const toCC = (value) => Math.floor(value * 127)
+
+// Funky bassline with accents
+const funkBass = track('funk-bass',
+  bassline(
+    [tonal.midi('C2'), tonal.midi('C2'), tonal.midi('D#2'), tonal.midi('F2')],
+    'x-x-x-xxx-x-x-x-',
+    {
+      velocity: 90,
+      accentVelocity: 110,
+      accentPattern: 'x-------x-------',
+      length: 12,
+      slideLength: 6,
+      channel: 0
+    }
+  )
+)
+
+// Fast filter LFO for movement
+const filterLFO = track('filter-lfo',
+  ccLFO(74, 1, 40, {
+    channel: 0,
+    center: toCC(0.5),
+    resolution: 6, // Very fast updates
+    waveform: 'sine'
+  })
+)
+
+// Resonance sweep
+const resonanceSweep = track('resonance',
+  ccRamp(71, toCC(0.2), toCC(0.7), 4, {
+    channel: 0,
+    resolution: 24,
+    loop: true
+  })
+)
+
+module.exports = song.create([
+  funkBass,
+  filterLFO,
+  resonanceSweep
+], {
+  tempo: 110,
+  meter: [4, 4]
+})
 ```
 
-### Dynamic Velocity
+Key techniques:
 
+- **Short note lengths** (12 ticks) for punchy bass
+- **Accent patterns** for groove and dynamics
+- **Fast LFO** (1 bar cycle) for rhythmic filter movement
+- **High velocities** (90-110) for aggressive sound
+- **Fast CC updates** (resolution: 6) for detailed modulation
+
+## Next Steps
+
+Now you know the fundamentals! Here's what to explore next:
+
+1. **Experiment with patterns**: Try different rhythm patterns, euclidean rhythms with `pattern.euclidean()`
+2. **Learn music theory helpers**: Explore `tonal.scale()`, `tonal.chord()`, `tonal.voicing()`
+3. **Study the examples**: Look at `piano-synth-demo.js` and `ambient-pad-demo.js` in the `examples/` folder
+4. **Try different synths**: Each synth responds differently to CC messages - experiment!
+5. **Create your own sections**: Build intro, verse, chorus, bridge sections
+6. **Combine techniques**: Use LFOs, ramps, and curves together for complex modulation
+
+## Quick Reference
+
+### Pattern Notation
+- `x` = play
+- `-` = rest
+- 4 characters = quarter note resolution
+- 16 characters = 16th note resolution
+
+### Common Functions
 ```javascript
-const dynamics = (state) => {
-  // Crescendo over 4 bars
-  const velocity = 60 + (state.bar % 4) * 15
-  
-  if (state.isFirstBeatOfBar()) {
-    return { actions: [midi.note('C4', { velocity })(state)] }
-  }
-  
-  return { actions: [] }
-}
+// Patterns
+pattern('x---x---').play(midiFunc)
+pattern.euclidean(3, 8).play(midiFunc)
+
+// MIDI
+midi.note('C4', { velocity: 80, length: 24, channel: 0 })
+midi.chord(['C4', 'E4', 'G4'], { spread: 6 })
+midi.cc(74, 64, { channel: 0 })
+
+// CC Automation
+ccRamp(controller, startValue, endValue, bars, options)
+ccLFO(controller, rate, depth, options)
+ccCurve(controller, values, bars, options)
+
+// Structure
+track('name', trackFunc)
+arrangement([[bars, 'name', tracks], ...])
+song.create(tracks, { tempo: 120, meter: [4, 4] })
+
+// Music Theory
+tonal.chord('Cm', 4) // C minor chord in octave 4
+tonal.scale('C major') // C major scale
+tonal.midi('C4') // Convert note name to MIDI number
 ```
 
-## API Reference
+## Troubleshooting
 
-### Pattern Module
+**No sound?**
+- Check that your MIDI connection is working (IAC Driver is online on macOS)
+- Verify your `.thrumrc` has the correct output port name
+- Make sure your synthesizer is listening to the right MIDI channel
+- Try the web synth [Enfer](https://ryanramage.github.io/Enfer/) to test
 
-- `pattern.pattern(str)` - Create a pattern from string notation
-- `pattern.euclidean(pulses, steps)` - Create euclidean rhythm
-- `pattern.play(midiFunc)` - Attach MIDI function to pattern
+**Changes not reloading?**
+- Make sure `"livecoding": true` is in your `.thrumrc`
+- Check the terminal for error messages
+- Try stopping (Ctrl+C) and restarting Thrum
 
-### MIDI Module
+**Patterns not playing when expected?**
+- Use `simulator.visualize()` to see what's happening
+- Check that your pattern length matches your intention (4 chars vs 16 chars)
+- Verify the MIDI channel matches your synth
 
-- `midi.note(note, options)` - Create note action
-- `midi.chord(notes, options)` - Create chord action
-- `midi.cc(controller, value, options)` - Create CC action
+## Community and Examples
 
-### Track Module
-
-- `track(name, trackFunc, options)` - Create named track
-- `group(name, tracks, options)` - Create track group
-- `arrangement(sections)` - Create section-based arrangement
-
-### Song Module
-
-- `song.create(tracks, options)` - Create song from tracks
-- `song.section(barsPerSection, func)` - Create section-based track
-
-### State Module
-
-- `State.from(bar, beat, tick)` - Create state from position
-- `State.fromTick(absoluteTick)` - Create state from tick count
-- `state.isFirstBeatOfBar()` - Check if bar start
-- `state.isBeat(n)` - Check if specific beat
-- `state.positionInBar()` - Get position in ticks
-- `state.withUserState(updates)` - Create new state with user data
-- `state.get(key, default)` - Get user state value
-
-### Simulator Module
-
-- `simulator.create(song, options)` - Create simulator
-- `sim.run(bars)` - Run for N bars
-- `sim.tick(absoluteTick)` - Run single tick
-- `sim.timeline(bars)` - Get detailed timeline
-- `sim.visualize(bars)` - ASCII visualization
-
-## Examples
-
-See the `examples/` directory for complete examples:
-
-- `simulator-demo.js` - Basic simulator usage
-- `track-demo.js` - Named tracks, groups, and arrangements
-
-## Contributing
-
-Contributions welcome! Please open an issue or PR on GitHub.
+- [GitHub Repository](https://github.com/ryanramage/thrum)
+- [More Examples](https://github.com/ryanramage/thrum-examples)
+- [Web Synth (Enfer)](https://ryanramage.github.io/Enfer/)
 
 ## License
 
 MIT
-
-## Links
-
-- [GitHub Repository](https://github.com/ryanramage/thrum)
-- [Live Coding Examples](https://github.com/ryanramage/thrum-examples)
-- [Web Synth (Enfer)](https://ryanramage.github.io/Enfer/)
