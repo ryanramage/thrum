@@ -143,7 +143,7 @@ function initMIDI() {
   }
   
   let spp = 0 // Song position in ticks
-  let lastLoggedBeat = -1
+  let lastLoggedBar = -1
   
   // Add a small delay to ensure MIDI port is ready
   setTimeout(function() {
@@ -158,7 +158,9 @@ function initMIDI() {
         case 0xFA: // Start
           console.log('MIDI: Start received')
           spp = 0
-          lastLoggedBeat = -1
+          lastLoggedBar = -1
+          console.log('♫ Bar 1')
+          lastLoggedBar = 0
           break
         case 0xFB: // Continue
           console.log('MIDI: Continue received')
@@ -176,7 +178,12 @@ function initMIDI() {
         case 0xF2: // Song Position Pointer
           const songPosition = (msg[2] << 7) + msg[1]
           spp = songPosition * 6
-          lastLoggedBeat = -1
+          // Log the current bar when position changes
+          const bar = Math.floor(spp / 96)
+          if (bar !== lastLoggedBar) {
+            console.log(`♫ Bar ${bar + 1}`)
+            lastLoggedBar = bar
+          }
           break
       }
     })
@@ -214,8 +221,9 @@ function onClockTick(spp) {
   const bar = Math.floor(spp / 96)
   
   // Log beat position (only on beat 0 of each bar to avoid spam)
-  if (beat === 0 && tick === 0) {
+  if (beat === 0 && tick === 0 && bar !== lastLoggedBar) {
     console.log(`♫ Bar ${bar + 1}`)
+    lastLoggedBar = bar
   }
   
   // Create proper State object
