@@ -163,7 +163,7 @@ const song1 = song.create([
     
     return midi.note(note, {
       velocity: 100,
-      length: 48,
+      length: 40,
       channel: 4
     })
   }))
