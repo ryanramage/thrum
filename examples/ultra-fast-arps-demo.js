@@ -1,11 +1,11 @@
-const { song, track, pattern, midi } = require('../index')
+const { song, track, pattern, midi, tonal } = require('../index')
 
-// Define chord progressions using MIDI note numbers directly
+// Define chord progressions using tonal note names
 const chords = {
-  'Cmaj7': [60, 64, 67, 71],  // C E G B
-  'Am7': [57, 60, 64, 67],    // A C E G  
-  'Fmaj7': [53, 57, 60, 64],  // F A C E
-  'G7': [55, 59, 62, 65]      // G B D F
+  'Cmaj7': ['C4', 'E4', 'G4', 'B4'],
+  'Am7': ['A3', 'C4', 'E4', 'G4'],  
+  'Fmaj7': ['F3', 'A3', 'C4', 'E4'],
+  'G7': ['G3', 'B3', 'D4', 'F4']
 }
 
 // Helper function to add swing timing
@@ -44,13 +44,16 @@ function ultraFastArp(notes, options = {}) {
   return pattern('xxxxxxxxxxxxxxxx', speed).play((state) => {
     // Use absoluteTick to create a consistent note index
     const noteIndex = Math.floor(state.absoluteTick / 1.5)
-    const note = notes[noteIndex % notes.length]
+    const noteName = notes[noteIndex % notes.length]
     const octaveSpread = Math.floor(noteIndex / notes.length) * spread
     const velocity = velocityRange[0] + 
       Math.floor(Math.random() * (velocityRange[1] - velocityRange[0]))
     
+    // Convert note name to MIDI and add octave spread
+    const midiNote = tonal.midi(noteName) + octaveSpread
+    
     // Clamp MIDI note to valid range (0-127)
-    const finalNote = Math.max(0, Math.min(127, note + octaveSpread))
+    const finalNote = Math.max(0, Math.min(127, midiNote))
     
     return midi.note(finalNote, {
       velocity,
@@ -63,7 +66,12 @@ function ultraFastArp(notes, options = {}) {
 // Polyrhythmic fast arps with different speeds
 function polyArps(chordName, options = {}) {
   const baseNotes = chords[chordName] || chords['Cmaj7']
-  const higherNotes = baseNotes.map(n => n + 12) // Octave higher
+  // Create higher octave versions by adding 1 to octave number
+  const higherNotes = baseNotes.map(note => {
+    const octave = parseInt(note.slice(-1))
+    const noteName = note.slice(0, -1)
+    return noteName + (octave + 1)
+  })
   
   return {
     // Main ultra-fast arp
@@ -84,8 +92,9 @@ function polyArps(chordName, options = {}) {
     
     // Sparse accent arp at 16th notes
     accentArp: pattern('x---x---x---x---', 'sixteenth').play((state) => {
-      const note = baseNotes[state.bar % baseNotes.length]
-      return midi.note(note + 24, {
+      const noteName = baseNotes[state.bar % baseNotes.length]
+      const midiNote = tonal.midi(noteName) + 24
+      return midi.note(midiNote, {
         velocity: 127,
         length: 12,
         channel: 2
@@ -118,10 +127,11 @@ const song1 = song.create([
   // Add some swing to a secondary arp layer
   track('Swing Arps', swingPattern(
     pattern('x-x-x-x-x-x-x-x-', 'thirtysecond').play((state) => {
-      const pentatonic = [60, 62, 65, 67, 69] // C pentatonic
-      const note = pentatonic[(state.absoluteTick / 3) % pentatonic.length]
+      const pentatonic = ['C4', 'D4', 'F4', 'G4', 'A4'] // C pentatonic
+      const noteName = pentatonic[(state.absoluteTick / 3) % pentatonic.length]
+      const midiNote = tonal.midi(noteName) + 12 // Add octave
       
-      return midi.note(note + 12, {
+      return midi.note(midiNote, {
         velocity: 60 + Math.sin(state.absoluteTick * 0.1) * 20,
         length: 8,
         channel: 2
@@ -141,12 +151,13 @@ const song1 = song.create([
     
     const currentPattern = patterns[state.bar % patterns.length]
     const arpTrack = pattern(currentPattern, 'sixtyfourth').play((state) => {
-      // Use MIDI note numbers directly instead of note names
-      const scale = [60, 62, 64, 65, 67, 69, 71] // C major scale
+      // Use tonal note names for C major scale
+      const scale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']
       const noteIndex = Math.floor(state.absoluteTick / 1.5) % scale.length
-      const note = scale[noteIndex] + 24 // Add octave
+      const noteName = scale[noteIndex]
+      const midiNote = tonal.midi(noteName) + 24 // Add octave
       
-      return midi.note(note, {
+      return midi.note(midiNote, {
         velocity: 85,
         length: 4,
         channel: 3
@@ -158,10 +169,11 @@ const song1 = song.create([
   
   // Bass line to anchor the chaos
   track('Bass', pattern('x---x---x---x---').play((state) => {
-    const bassNotes = [36, 36, 33, 38] // C, C, A, D
-    const note = bassNotes[Math.floor(state.bar / 2) % bassNotes.length]
+    const bassNotes = ['C2', 'C2', 'A1', 'D2'] // Bass notes
+    const noteName = bassNotes[Math.floor(state.bar / 2) % bassNotes.length]
+    const midiNote = tonal.midi(noteName)
     
-    return midi.note(note, {
+    return midi.note(midiNote, {
       velocity: 100,
       length: 40,
       channel: 4
