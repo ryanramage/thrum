@@ -49,7 +49,10 @@ function ultraFastArp(notes, options = {}) {
     const velocity = velocityRange[0] + 
       Math.floor(Math.random() * (velocityRange[1] - velocityRange[0]))
     
-    return midi.note(note + octaveSpread, {
+    // Clamp MIDI note to valid range (0-127)
+    const finalNote = Math.max(0, Math.min(127, note + octaveSpread))
+    
+    return midi.note(finalNote, {
       velocity,
       length: 6,
       channel
@@ -66,7 +69,7 @@ function polyArps(chordName, options = {}) {
     // Main ultra-fast arp
     fastArp: ultraFastArp(baseNotes, {
       speed: 'sixtyfourth',
-      spread: 12,
+      spread: 6,
       velocityRange: [90, 110],
       channel: 0
     }),
@@ -74,7 +77,7 @@ function polyArps(chordName, options = {}) {
     // Counter arp at 32nd notes with different voicing
     counterArp: ultraFastArp(higherNotes, {
       speed: 'thirtysecond', 
-      spread: -12,
+      spread: -6,
       velocityRange: [70, 90],
       channel: 1
     }),
