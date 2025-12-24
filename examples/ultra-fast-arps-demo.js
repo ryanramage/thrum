@@ -31,21 +31,20 @@ function ultraFastArp(notes, options = {}) {
   const speed = options.speed || 'sixtyfourth'
   const spread = options.spread || 0
   const velocityRange = options.velocityRange || [80, 120]
-  
-  let noteIndex = 0
+  const channel = options.channel || 0
   
   return pattern('xxxxxxxxxxxxxxxx', speed).play((state) => {
+    // Use absoluteTick to create a consistent note index
+    const noteIndex = Math.floor(state.absoluteTick / 1.5)
     const note = notes[noteIndex % notes.length]
     const octaveSpread = Math.floor(noteIndex / notes.length) * spread
     const velocity = velocityRange[0] + 
       Math.floor(Math.random() * (velocityRange[1] - velocityRange[0]))
     
-    noteIndex++
-    
     return midi.note(note + octaveSpread, {
       velocity,
       length: 6,
-      channel: 0
+      channel
     })
   })
 }
@@ -54,31 +53,33 @@ function ultraFastArp(notes, options = {}) {
 function polyArps(chordName, options = {}) {
   const baseNotes = tonal.chord(chordName, 4)
   
-  return [
+  return {
     // Main ultra-fast arp
-    ultraFastArp(baseNotes, {
+    fastArp: ultraFastArp(baseNotes, {
       speed: 'sixtyfourth',
       spread: 12,
-      velocityRange: [90, 110]
+      velocityRange: [90, 110],
+      channel: 0
     }),
     
     // Counter arp at 32nd notes with different voicing
-    ultraFastArp(tonal.chord(chordName, 5), {
+    counterArp: ultraFastArp(tonal.chord(chordName, 5), {
       speed: 'thirtysecond', 
       spread: -12,
-      velocityRange: [70, 90]
+      velocityRange: [70, 90],
+      channel: 1
     }),
     
     // Sparse accent arp at 16th notes
-    pattern('x---x---x---x---', 'sixteenth').play((state) => {
+    accentArp: pattern('x---x---x---x---', 'sixteenth').play((state) => {
       const note = baseNotes[state.bar % baseNotes.length]
       return midi.note(note + 24, {
         velocity: 127,
         length: 12,
-        channel: 1
+        channel: 2
       })
     })
-  ]
+  }
 }
 
 // Create the song with multiple arp layers
@@ -88,10 +89,11 @@ const song1 = song.create([
     const chords = ['Cmaj7', 'Am7', 'Fmaj7', 'G7']
     const currentChord = chords[Math.floor(state.bar / 2) % chords.length]
     
-    const arpTracks = polyArps(currentChord)
+    const arps = polyArps(currentChord)
     const actions = []
     
-    arpTracks.forEach(arpTrack => {
+    // Execute each arp track
+    Object.values(arps).forEach(arpTrack => {
       const result = arpTrack(state)
       if (result && result.actions) {
         actions.push(...result.actions)
@@ -127,10 +129,12 @@ const song1 = song.create([
     
     const currentPattern = patterns[state.bar % patterns.length]
     const arpTrack = pattern(currentPattern, 'sixtyfourth').play((state) => {
-      const scale = tonal.scale('C major')
-      const note = scale[(state.absoluteTick / 1.5) % scale.length]
+      // Use MIDI note numbers directly instead of note names
+      const scale = [60, 62, 64, 65, 67, 69, 71] // C major scale
+      const noteIndex = Math.floor(state.absoluteTick / 1.5) % scale.length
+      const note = scale[noteIndex] + 24 // Add octave
       
-      return midi.note(tonal.midi(note + '6'), {
+      return midi.note(note, {
         velocity: 85,
         length: 4,
         channel: 3
