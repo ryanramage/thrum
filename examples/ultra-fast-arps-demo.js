@@ -1,4 +1,12 @@
-const { song, track, pattern, midi, tonal } = require('../index')
+const { song, track, pattern, midi } = require('../index')
+
+// Define chord progressions using MIDI note numbers directly
+const chords = {
+  'Cmaj7': [60, 64, 67, 71],  // C E G B
+  'Am7': [57, 60, 64, 67],    // A C E G  
+  'Fmaj7': [53, 57, 60, 64],  // F A C E
+  'G7': [55, 59, 62, 65]      // G B D F
+}
 
 // Helper function to add swing timing
 function swingPattern(basePattern, swingAmount = 0.1) {
@@ -51,7 +59,8 @@ function ultraFastArp(notes, options = {}) {
 
 // Polyrhythmic fast arps with different speeds
 function polyArps(chordName, options = {}) {
-  const baseNotes = tonal.chord(chordName, 4)
+  const baseNotes = chords[chordName] || chords['Cmaj7']
+  const higherNotes = baseNotes.map(n => n + 12) // Octave higher
   
   return {
     // Main ultra-fast arp
@@ -63,7 +72,7 @@ function polyArps(chordName, options = {}) {
     }),
     
     // Counter arp at 32nd notes with different voicing
-    counterArp: ultraFastArp(tonal.chord(chordName, 5), {
+    counterArp: ultraFastArp(higherNotes, {
       speed: 'thirtysecond', 
       spread: -12,
       velocityRange: [70, 90],
@@ -86,8 +95,8 @@ function polyArps(chordName, options = {}) {
 const song1 = song.create([
   // Main chord progression with ultra-fast arps
   track('Fast Arps', (state) => {
-    const chords = ['Cmaj7', 'Am7', 'Fmaj7', 'G7']
-    const currentChord = chords[Math.floor(state.bar / 2) % chords.length]
+    const chordNames = ['Cmaj7', 'Am7', 'Fmaj7', 'G7']
+    const currentChord = chordNames[Math.floor(state.bar / 2) % chordNames.length]
     
     const arps = polyArps(currentChord)
     const actions = []
