@@ -127,9 +127,9 @@ const song1 = song.create([
   // Add some swing to a secondary arp layer
   track('Swing Arps', swingPattern(
     pattern('x-x-x-x-x-x-x-x-', 'thirtysecond').play((state) => {
-      const pentatonic = ['C4', 'D4', 'F4', 'G4', 'A4'] // C pentatonic
+      const pentatonic = ['C3', 'D3', 'F3', 'G3', 'A3'] // C pentatonic
       const noteName = pentatonic[(state.absoluteTick / 3) % pentatonic.length]
-      const midiNote = tonal.midi(noteName) + 12 // Add octave
+      const midiNote = tonal.midi(noteName) - 24 // Add octave
       
       return midi.note(midiNote, {
         velocity: 60 + Math.sin(state.absoluteTick * 0.1) * 20,
@@ -152,7 +152,7 @@ const song1 = song.create([
     const currentPattern = patterns[state.bar % patterns.length]
     const arpTrack = pattern(currentPattern, 'sixtyfourth').play((state) => {
       // Use tonal note names for C major scale
-      const scale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']
+      const scale = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3']
       const noteIndex = Math.floor(state.absoluteTick / 1.5) % scale.length
       const noteName = scale[noteIndex]
       const midiNote = tonal.midi(noteName) + 24 // Add octave
